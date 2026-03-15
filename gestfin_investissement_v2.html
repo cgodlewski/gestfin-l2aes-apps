@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Financière — Choix d'Investissement</title>
+<script src="../node_modules/chart.js/dist/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  :root{--bg:#0d0f14;--surface:#13161e;--surface2:#1a1e2a;--border:#252a38;--accent:#4f9cf9;--accent2:#f97b4f;--accent3:#63e6a0;--accent4:#f9e44f;--text:#e8ecf4;--text2:#8892a4;--text3:#5a6478;--danger:#f95f5f;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:2rem;height:60px;}
+  .logo{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--accent);white-space:nowrap;}
+  .logo span{color:var(--text2);font-size:.72rem;font-family:'IBM Plex Sans',sans-serif;display:block;}
+  nav{display:flex;gap:.2rem;overflow-x:auto;flex:1;scrollbar-width:thin;}
+  nav::-webkit-scrollbar{height:2px;}nav::-webkit-scrollbar-thumb{background:var(--border);}
+  .nav-btn{background:none;border:1px solid transparent;color:var(--text2);cursor:pointer;padding:.35rem .8rem;border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;white-space:nowrap;transition:all .15s;}
+  .nav-btn:hover{color:var(--text);background:var(--surface2);}
+  .nav-btn.active{color:var(--accent);background:rgba(79,156,249,.1);border-color:rgba(79,156,249,.3);}
+  main{padding:2rem;max-width:1400px;margin:0 auto;}
+  .section{display:none;}.section.active{display:block;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;}
+  .card-title{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+  .badge{font-family:'IBM Plex Mono',monospace;font-size:.62rem;padding:2px 8px;border-radius:3px;background:rgba(79,156,249,.15);color:var(--accent);border:1px solid rgba(79,156,249,.3);font-weight:600;letter-spacing:.05em;white-space:nowrap;}
+  .badge.orange{background:rgba(249,123,79,.15);color:var(--accent2);border-color:rgba(249,123,79,.3);}
+  .badge.green{background:rgba(99,230,160,.15);color:var(--accent3);border-color:rgba(99,230,160,.3);}
+  .badge.yellow{background:rgba(249,228,79,.15);color:var(--accent4);border-color:rgba(249,228,79,.3);}
+  .badge.red{background:rgba(249,95,95,.15);color:var(--danger);border-color:rgba(249,95,95,.3);}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;}
+  .grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;}
+  @media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+  .control-group{margin-bottom:.9rem;}
+  .control-group label{display:block;font-size:.72rem;color:var(--text2);margin-bottom:.35rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase;}
+  input[type="range"]{width:100%;accent-color:var(--accent);height:4px;}
+  .range-row{display:flex;align-items:center;gap:1rem;}
+  .range-val{font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--accent);min-width:60px;text-align:right;font-weight:600;}
+  input[type="number"],input[type="text"]{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.45rem .7rem;border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:.82rem;width:100%;transition:border-color .15s;}
+  input[type="number"]:focus,input[type="text"]:focus{outline:none;border-color:var(--accent);}
+  select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.45rem .7rem;border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:.82rem;width:100%;}
+  .btn{background:rgba(79,156,249,.15);border:1px solid rgba(79,156,249,.4);color:var(--accent);padding:.45rem 1.1rem;border-radius:5px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;font-weight:500;transition:all .15s;}
+  .btn:hover{background:rgba(79,156,249,.25);}
+  .btn.orange{background:rgba(249,123,79,.15);border-color:rgba(249,123,79,.4);color:var(--accent2);}
+  .btn.green{background:rgba(99,230,160,.15);border-color:rgba(99,230,160,.4);color:var(--accent3);}
+  .stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.9rem;text-align:center;}
+  .stat-val{font-family:'IBM Plex Mono',monospace;font-size:1.3rem;font-weight:600;color:var(--accent);display:block;}
+  .stat-lbl{font-size:.68rem;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem;}
+  .formula{background:var(--surface2);border-left:3px solid var(--accent);padding:.7rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--accent3);border-radius:0 5px 5px 0;margin:.65rem 0;overflow-x:auto;}
+  .formula.orange{border-color:var(--accent2);}
+  .formula.green{border-color:var(--accent3);}
+  .theory-block{background:var(--surface2);border-radius:7px;padding:.9rem 1.1rem;font-size:.86rem;line-height:1.7;color:var(--text2);margin-bottom:.9rem;}
+  .theory-block strong{color:var(--text);}
+  .theory-block .hl{color:var(--accent);font-family:'IBM Plex Mono',monospace;}
+  .theory-block .hl2{color:var(--accent2);}
+  .theory-block .hl3{color:var(--accent3);}
+  .theory-block .hl4{color:var(--accent4);}
+  .chart-wrap{position:relative;height:320px;width:100%;}
+  .section-hero{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+  .section-hero h1{font-family:'Playfair Display',serif;font-size:1.85rem;color:var(--text);margin-bottom:.4rem;}
+  .section-hero p{font-size:.88rem;color:var(--text2);line-height:1.6;}
+  table{width:100%;border-collapse:collapse;font-size:.8rem;}
+  th{background:var(--surface2);padding:.55rem .85rem;text-align:left;color:var(--text2);font-weight:600;letter-spacing:.03em;font-size:.7rem;text-transform:uppercase;border-bottom:1px solid var(--border);}
+  td{padding:.5rem .85rem;border-bottom:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,255,255,.02);}
+  td.lbl{font-family:'IBM Plex Sans',sans-serif;color:var(--text2);font-size:.8rem;}
+  .tab-bar{display:flex;gap:.4rem;margin-bottom:1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:.55rem 1rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;color:var(--text2);transition:all .15s;margin-bottom:-1px;}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-pane{display:none;}.tab-pane.active{display:block;}
+  .quiz-q{font-size:.92rem;font-weight:500;margin-bottom:.9rem;color:var(--text);line-height:1.55;}
+  .quiz-opt{display:block;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.6rem 1rem;margin-bottom:.45rem;cursor:pointer;font-size:.83rem;color:var(--text2);transition:all .15s;}
+  .quiz-opt:hover{border-color:var(--accent);color:var(--text);}
+  .quiz-opt.correct{background:rgba(99,230,160,.15);border-color:var(--accent3);color:var(--accent3);}
+  .quiz-opt.wrong{background:rgba(249,95,95,.15);border-color:var(--danger);color:var(--danger);}
+  .quiz-feedback{padding:.7rem 1rem;border-radius:6px;font-size:.83rem;margin-top:.65rem;display:none;line-height:1.5;}
+  .quiz-feedback.show{display:block;}
+  .quiz-feedback.ok{background:rgba(99,230,160,.1);border:1px solid rgba(99,230,160,.3);color:var(--accent3);}
+  .quiz-feedback.ko{background:rgba(249,95,95,.1);border:1px solid rgba(249,95,95,.3);color:var(--danger);}
+  .score-ctr{font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:var(--text2);margin-left:auto;}
+  .note{font-size:.73rem;color:var(--text3);font-style:italic;margin-top:.45rem;}
+  mark{background:rgba(79,156,249,.2);color:var(--accent);padding:0 3px;border-radius:2px;}
+  .step{background:var(--surface2);border-radius:7px;padding:.85rem 1.1rem;margin-bottom:.65rem;border-left:3px solid var(--accent3);}
+  .step-num{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:.3rem;}
+  .verdict{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.1rem;border-radius:6px;font-weight:600;font-size:.88rem;margin-top:.75rem;}
+  .verdict.accept{background:rgba(99,230,160,.15);border:1px solid var(--accent3);color:var(--accent3);}
+  .verdict.reject{background:rgba(249,95,95,.15);border:1px solid var(--danger);color:var(--danger);}
+  .verdict.warn{background:rgba(249,228,79,.15);border:1px solid var(--accent4);color:var(--accent4);}
+  .flux-input{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem;margin:.75rem 0;}
+  .flux-input input{text-align:center;}
+  .highlight-row td{background:rgba(79,156,249,.07);color:var(--accent);font-weight:600;}
+  .pos{color:var(--accent3);} .neg{color:var(--danger);} .neu{color:var(--accent4);}
+  .pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.72rem;font-family:'IBM Plex Mono',monospace;font-weight:600;}
+  .pill.pos{background:rgba(99,230,160,.2);color:var(--accent3);}
+  .pill.neg{background:rgba(249,95,95,.2);color:var(--danger);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Gestion Financière <span>L2 AES — Choix d'Investissement</span></div>
+  <nav>
+    <button class="nav-btn active" onclick="go('accueil')">🏠 Accueil</button>
+    <button class="nav-btn" onclick="go('politique')">🎯 Politique</button>
+    <button class="nav-btn" onclick="go('caracteristiques')">📐 Caractéristiques</button>
+    <button class="nav-btn" onclick="go('fnt')">💸 FNT / CAF</button>
+    <button class="nav-btn" onclick="go('van')">📊 VAN</button>
+    <button class="nav-btn" onclick="go('tri')">📈 TRI &amp; TRI global</button>
+    <button class="nav-btn" onclick="go('dr')">⏱️ DR</button>
+    <button class="nav-btn" onclick="go('comparaison')">⚖️ VAN vs TRI</button>
+    <button class="nav-btn" onclick="go('sensibilite')">🔬 Sensibilité</button>
+    <button class="nav-btn" onclick="go('exercices')">✏️ Exercices</button>
+    <button class="nav-btn" onclick="go('quiz')">🎯 Quiz</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ══ ACCUEIL ══════════════════════════════════════════════════ -->
+<div id="accueil" class="section active">
+  <div class="section-hero">
+    <h1>Choix d'Investissement</h1>
+    <p>Application interactive — politique d'investissement, calcul des FNT, VAN, TRI, délai de récupération, analyse de sensibilité. Prof. C.J. Godlewski.</p>
+  </div>
+  <div class="grid-3">
+    <div class="card" style="cursor:pointer" onclick="go('politique')">
+      <div class="card-title"><span class="badge">01</span> Politique d'investissement</div>
+      <div class="theory-block">Types d'investissements (expansion, diversification, remplacement, innovation). Objectif de création de valeur.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('caracteristiques')">
+      <div class="card-title"><span class="badge">02</span> Caractéristiques</div>
+      <div class="theory-block">Capital investi, durée d'exploitation, valeur résiduelle, variation de BFR. Construction du montant initial.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('fnt')">
+      <div class="card-title"><span class="badge orange">03</span> FNT &amp; CAF</div>
+      <div class="theory-block">Calcul de la CAF d'exploitation, flux nets de trésorerie, cas du remplacement. Tableau de calcul interactif.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('van')">
+      <div class="card-title"><span class="badge orange">04</span> VAN</div>
+      <div class="theory-block">Valeur Actuelle Nette — critère principal. Simulateur de VAN en fonction du taux. Courbe VAN/taux interactive.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('tri')">
+      <div class="card-title"><span class="badge green">05</span> TRI &amp; TRI global</div>
+      <div class="theory-block">Taux de Rendement Interne, hypothèse de réinvestissement, TRI global (TRIM). Limites du TRI classique.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('comparaison')">
+      <div class="card-title"><span class="badge green">06</span> VAN vs TRI</div>
+      <div class="theory-block">Contradictions entre VAN et TRI, taux d'indifférence, Fisher intersection. Projets A et B du cours.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Formules essentielles</div>
+    <div class="grid-3">
+      <div class="stat-box"><span class="stat-val" style="font-size:.88rem">VAN = Σ FNT_t/(1+k)^t − I₀</span><span class="stat-lbl">Valeur Actuelle Nette</span></div>
+      <div class="stat-box"><span class="stat-val" style="font-size:.88rem">TRI : VAN(TRI) = 0</span><span class="stat-lbl">Taux de Rendement Interne</span></div>
+      <div class="stat-box"><span class="stat-val" style="font-size:.88rem">CAF = RN + DAP</span><span class="stat-lbl">Capacité d'Autofinancement d'exploitation</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ POLITIQUE ══════════════════════════════════════════════ -->
+<div id="politique" class="section">
+  <div class="section-hero">
+    <h1>Politique d'investissement</h1>
+    <p>Investir = engagement de capital dans l'espoir de gains futurs. Objectif : création de valeur.</p>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Définition</span> L'investissement</div>
+      <div class="theory-block">
+        Un investissement est un <strong>engagement de capital dans une opération</strong> dont on attend des gains futurs, étalés dans le temps, avec l'objectif de créer de la valeur.<br><br>
+        C'est la traduction concrète des stratégies générales de la direction. Toute décision d'investissement comporte un <span class="hl2">risque économique et financier</span> dont les résultats sont conditionnés par la réalisation des prévisions.
+      </div>
+      <div class="theory-block">
+        <strong>Étude financière :</strong><br>
+        1. Chiffrer les caractéristiques (montant, durée, flux)<br>
+        2. Évaluer la rentabilité → déterminer le taux d'actualisation (CMPC)<br>
+        3. Comparer les critères de décision (VAN, TRI, DR)
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Types</span> d'investissements</div>
+      <div style="display:grid;gap:.65rem">
+        <div class="theory-block" style="margin:0;border-left:3px solid var(--accent)">
+          <strong>🏗️ Expansion</strong> — augmentation de la capacité de production ou de distribution dans le même domaine (interne ou externe)</div>
+        <div class="theory-block" style="margin:0;border-left:3px solid var(--accent2)">
+          <strong>🌐 Diversification</strong> — développement dans un domaine nouveau. Plus risqué que l'expansion.</div>
+        <div class="theory-block" style="margin:0;border-left:3px solid var(--accent3)">
+          <strong>🔄 Renouvellement / Remplacement</strong> — remplacer des investissements obsolètes. Gains de productivité.</div>
+        <div class="theory-block" style="margin:0;border-left:3px solid var(--accent4)">
+          <strong>💡 Innovation</strong> — exploiter une nouvelle technologie. Implique une réorganisation des modalités de production.</div>
+        <div class="theory-block" style="margin:0;border-left:3px solid var(--text3)">
+          <strong>👥 Social</strong> — améliorer les conditions de vie du personnel. Meilleure productivité / fidélité.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Critères de décision — vue d'ensemble</div>
+    <div class="grid-3">
+      <div class="stat-box"><div style="font-size:1.5rem;margin-bottom:.5rem">💰</div><span class="stat-val" style="font-size:1rem;color:var(--accent3)">VAN &gt; 0</span><span class="stat-lbl">Valeur Actuelle Nette positive → projet créateur de valeur</span></div>
+      <div class="stat-box"><div style="font-size:1.5rem;margin-bottom:.5rem">📈</div><span class="stat-val" style="font-size:1rem;color:var(--accent)">TRI &gt; k</span><span class="stat-lbl">TRI supérieur au coût du capital → projet rentable</span></div>
+      <div class="stat-box"><div style="font-size:1.5rem;margin-bottom:.5rem">⏱️</div><span class="stat-val" style="font-size:1rem;color:var(--accent2)">DR minimal</span><span class="stat-lbl">Délai de Récupération du capital investi le plus court</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CARACTERISTIQUES ════════════════════════════════════════ -->
+<div id="caracteristiques" class="section">
+  <div class="section-hero">
+    <h1>Caractéristiques d'un projet</h1>
+    <p>Capital investi, durée, valeur résiduelle, BFR — les quatre éléments fondamentaux à chiffrer.</p>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Théorie</span> Capital investi (I₀)</div>
+      <div class="theory-block">
+        <span class="hl">I₀ = Immobilisations HT + Frais accessoires HT + ΔBFRE</span><br><br>
+        <strong>Immobilisations :</strong> prix d'achat ou coût de construction HT (+ transport, installation…)<br><br>
+        <strong>ΔBFRE :</strong> toute hausse de CA entraîne une hausse du besoin en fonds de roulement d'exploitation. Décaissé en début de projet, récupéré en fin de projet (flux positif à la dernière période).<br><br>
+        <strong>Cas du remplacement :</strong> le prix de cession de l'ancien équipement (net d'IS sur la plus-value) vient en déduction du capital investi.
+      </div>
+      <div class="formula">I₀ = Prix achat (HT) + Frais accessoires + ΔBFRE − Prix cession ancien (net IS)</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Simulateur</span> Capital investi &amp; BFR</div>
+      <div class="control-group"><label>Prix d'achat HT (k€)</label><div class="range-row"><input type="range" id="capPrix" min="50" max="1000" step="10" value="200" oninput="updateCap()"><span class="range-val" id="capPrixV">200</span></div></div>
+      <div class="control-group"><label>Frais accessoires (k€)</label><div class="range-row"><input type="range" id="capFrais" min="0" max="50" step="1" value="10" oninput="updateCap()"><span class="range-val" id="capFraisV">10</span></div></div>
+      <div class="control-group"><label>CA annuel généré (k€)</label><div class="range-row"><input type="range" id="capCA" min="0" max="1000" step="10" value="300" oninput="updateCap()"><span class="range-val" id="capCAV">300</span></div></div>
+      <div class="control-group"><label>BFR = N mois de CA</label><div class="range-row"><input type="range" id="capBFR" min="0" max="3" step="1" value="1" oninput="updateCap()"><span class="range-val" id="capBFRV">1 mois</span></div></div>
+      <div class="control-group"><label>Prix cession ancien équip. net IS (k€)</label><div class="range-row"><input type="range" id="capCess" min="0" max="100" step="5" value="0" oninput="updateCap()"><span class="range-val" id="capCessV">0</span></div></div>
+      <div class="grid-3" style="margin-top:.75rem">
+        <div class="stat-box"><span class="stat-val" id="capDeltaBFR">25</span><span class="stat-lbl">ΔBFRE (k€)</span></div>
+        <div class="stat-box"><span class="stat-val" id="capI0" style="color:var(--accent3)">210</span><span class="stat-lbl">I₀ total (k€)</span></div>
+        <div class="stat-box"><span class="stat-val" id="capBFRRec">25</span><span class="stat-lbl">BFR récupéré fin</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Durée &amp; Valeur résiduelle</span></div>
+      <div class="theory-block">
+        <strong>Durée d'exploitation :</strong> difficile à prévoir — on retient souvent la durée d'amortissement.<br><br>
+        <strong>Valeur résiduelle (VR) :</strong> valeur attribuée à l'investissement au terme de la durée retenue = prix attendu d'une cession.<br><br>
+        Si amortissement complet → valeur comptable = 0 → VR = plus-value nette d'IS.<br><br>
+        <span class="hl">FNT dernière période = CAF_n + VR_nette_IS + récupération ΔBFRE</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Simulateur</span> Valeur résiduelle</div>
+      <div class="control-group"><label>Valeur d'acquisition (k€)</label><div class="range-row"><input type="range" id="vrAcq" min="50" max="500" step="10" value="160" oninput="updateVR()"><span class="range-val" id="vrAcqV">160</span></div></div>
+      <div class="control-group"><label>Durée amortissement (ans)</label><div class="range-row"><input type="range" id="vrDureAmort" min="2" max="10" step="1" value="5" oninput="updateVR()"><span class="range-val" id="vrDureAmortV">5</span></div></div>
+      <div class="control-group"><label>Durée retenue pour projet (ans)</label><div class="range-row"><input type="range" id="vrDureProjet" min="1" max="10" step="1" value="5" oninput="updateVR()"><span class="range-val" id="vrDureProjetV">5</span></div></div>
+      <div class="control-group"><label>Prix de cession estimé (k€)</label><div class="range-row"><input type="range" id="vrPrix" min="0" max="200" step="5" value="20" oninput="updateVR()"><span class="range-val" id="vrPrixV">20</span></div></div>
+      <div class="control-group"><label>Taux IS (%)</label><div class="range-row"><input type="range" id="vrIS" min="15" max="40" step="1" value="33" oninput="updateVR()"><span class="range-val" id="vrISV">33%</span></div></div>
+      <div class="grid-3" style="margin-top:.75rem">
+        <div class="stat-box"><span class="stat-val" id="vrVCN">0</span><span class="stat-lbl">VCN (k€)</span></div>
+        <div class="stat-box"><span class="stat-val" id="vrPlusValue">20</span><span class="stat-lbl">Plus-value (k€)</span></div>
+        <div class="stat-box"><span class="stat-val" id="vrNetIS" style="color:var(--accent3)">13.4</span><span class="stat-lbl">VR nette IS (k€)</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FNT ═══════════════════════════════════════════════════ -->
+<div id="fnt" class="section">
+  <div class="section-hero">
+    <h1>Flux Nets de Trésorerie (FNT / Cash Flows)</h1>
+    <p>Calcul de la CAF d'exploitation et des FNT prévisionnels — le cœur de l'analyse d'investissement.</p>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="badge">Méthode</span> Calcul des FNT</div>
+    <div class="grid-2">
+      <div>
+        <div class="formula">CAF exp = CA − Charges décaissables = RN + DAP</div>
+        <div class="formula orange">CAF exp = EBE × (1 − IS) + DAP × IS &nbsp;=&nbsp; EBE − IS sur EBE</div>
+        <div class="formula green">FNT_t = CAF_t &nbsp;(hors BFR et VR) &nbsp;|&nbsp; FNT_n = CAF_n + VR_nette + Récup. BFR</div>
+      </div>
+      <div class="theory-block">
+        <strong>Simplification pratique :</strong><br>
+        FNT = CAF d'exploitation = (EBE − DAP) × (1−IS) + DAP<br><br>
+        Le terme <span class="hl">DAP × IS</span> représente l'<strong>économie d'IS sur amortissement</strong> = avantage fiscal de l'amortissement.<br><br>
+        <span class="hl2">Résultat déficitaire</span> la première année → perte imputée aux bénéfices d'autres activités si l'entreprise est globalement bénéficiaire.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge orange">Intuition</span> Ce que mesurent vraiment les FNT</div>
+    <div class="grid-2">
+      <div class="theory-block">
+        <strong>Id&eacute;e simple :</strong> un projet n'est int&eacute;ressant que s'il ajoute vraiment de la
+        <strong>tr&eacute;sorerie</strong> &agrave; l'entreprise, pas seulement un r&eacute;sultat comptable.<br><br>
+        Les <span class="hl">dotations aux amortissements</span> sont r&eacute;int&eacute;gr&eacute;es car elles
+        diminuent le r&eacute;sultat mais <strong>ne sortent pas du compte bancaire</strong> :
+        ce sont des charges calcul&eacute;es.<br><br>
+        Le <span class="hl2">BFR</span> est un d&eacute;caissement quand le projet immobilise davantage de cash
+        dans les stocks, les cr&eacute;ances clients ou l'exploitation.
+      </div>
+      <div class="theory-block">
+        La <span class="hl3">valeur r&eacute;siduelle</span> est ajout&eacute;e au dernier flux,
+        <strong>nette d'IS</strong>, car seule la tr&eacute;sorerie effectivement conserv&eacute;e compte.<br><br>
+        La <span class="hl4">r&eacute;cup&eacute;ration du BFR</span> en fin de projet est un encaissement :
+        le cash immobilis&eacute; au d&eacute;part revient &agrave; l'entreprise.<br><br>
+        <strong>En r&eacute;sum&eacute; :</strong> les FNT mesurent ce que le projet apporte vraiment
+        au cash de l'entreprise au fil du temps.
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('fntTab','exCours')">Exemple cours (160 k€)</button>
+    <button class="tab-btn" onclick="showTab('fntTab','remplacement')">Investissement remplacement</button>
+    <button class="tab-btn" onclick="showTab('fntTab','calc')">Calculateur libre</button>
+  </div>
+
+  <div id="fntTab-exCours" class="tab-pane active">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Exemple cours</span> Projet 160 k€ — 5 ans</div>
+      <div class="theory-block">Investissement de <strong>160 k€</strong>, amorti en linéaire sur <strong>5 ans</strong>. CA : 210 k€ (an 1) puis 240 k€ (ans 2-5). Charges variables : 100 k€ (an 1) puis 120 k€ (ans 2-5). Charges fixes : 44 k€/an. IS = 33.33%.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Tableau de calcul des FNT</span></div>
+      <div style="overflow-x:auto"><table id="tabExCours">
+        <thead><tr><th>Poste (k€)</th><th>Année 1</th><th>Année 2</th><th>Année 3</th><th>Année 4</th><th>Année 5</th></tr></thead>
+        <tbody id="tbodyExCours"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div id="fntTab-remplacement" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Exemple cours</span> Remplacement — EBE supplémentaire</div>
+      <div class="theory-block">Remplacement d'un équipement totalement amorti. Prix acquisition nouvel équipement = <strong>100 k€</strong>, amorti linéaire sur <strong>5 ans</strong>. EBE supplémentaire prévu = <strong>26 k€/an</strong>. VR nulle. Revente ancien équipement pour <strong>10 k€ net IS</strong>. IS = 33.33%.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Calcul</span></div>
+      <div class="step"><div class="step-num">Capital investi net</div>I₀ = 100 − 10 (cession ancien) = <mark>90 k€</mark></div>
+      <div class="step"><div class="step-num">DAP annuelle</div>DAP = 100 / 5 = <mark>20 k€</mark></div>
+      <div class="step"><div class="step-num">FNT annuels</div>FNT = EBE_supp × (1−IS) + DAP × IS = 26 × (2/3) + 20 × (1/3) = 17.33 + 6.67 = <mark>24 k€</mark></div>
+      <div class="grid-3" style="margin-top:.75rem">
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent2)">90 k€</span><span class="stat-lbl">Capital investi net</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent)">24 k€/an</span><span class="stat-lbl">FNT annuel</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">5 ans</span><span class="stat-lbl">Durée</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fntTab-calc" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur FNT interactif</span></div>
+      <div class="grid-2">
+        <div>
+          <div class="control-group"><label>Investissement HT (k€)</label><input type="number" id="fntI" value="900" oninput="updateFNTCalc()"></div>
+          <div class="control-group"><label>Durée (ans, max 7)</label><input type="number" id="fntN" value="5" min="1" max="7" oninput="updateFNTCalc()"></div>
+          <div class="control-group"><label>Amortissement</label><select id="fntAmort" onchange="updateFNTCalc()"><option value="linear">Linéaire</option></select></div>
+          <div class="control-group"><label>Taux IS (%)</label><input type="number" id="fntIS" value="33.33" step=".01" oninput="updateFNTCalc()"></div>
+          <div class="control-group"><label>Valeur résiduelle nette IS (k€, à la dernière période)</label><input type="number" id="fntVR" value="0" oninput="updateFNTCalc()"></div>
+          <div class="control-group"><label>Récupération BFR (k€, à la dernière période)</label><input type="number" id="fntBFRRec" value="0" oninput="updateFNTCalc()"></div>
+          <p style="font-size:.75rem;color:var(--text2);margin:.5rem 0 .25rem">CA par année (k€)</p>
+          <div class="flux-input" id="fntCAInputs"></div>
+          <p style="font-size:.75rem;color:var(--text2);margin:.5rem 0 .25rem">Charges décaissables par année (k€)</p>
+          <div class="flux-input" id="fntChargeInputs"></div>
+        </div>
+        <div>
+          <div style="overflow-x:auto;max-height:480px;overflow-y:auto">
+            <table id="fntCalcTable">
+              <thead><tr id="fntCalcHead"></tr></thead>
+              <tbody id="fntCalcBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VAN ════════════════════════════════════════════════════ -->
+<div id="van" class="section">
+  <div class="section-hero">
+    <h1>VAN — Valeur Actuelle Nette</h1>
+    <p>Critère principal de sélection : un projet est acceptable si sa VAN est strictement positive.</p>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="badge">Formule</span></div>
+    <div class="formula" style="font-size:1rem;padding:.9rem 1.2rem">VAN = −I₀ + Σ[t=1 à n] FNT_t / (1+k)^t + VR_n / (1+k)^n</div>
+    <div class="theory-block">
+      <strong>Vigilance inflation :</strong> des <span class="hl">flux nominaux</span> doivent &ecirc;tre
+      actualis&eacute;s avec un <span class="hl2">taux nominal</span>, alors que des
+      <span class="hl">flux r&eacute;els</span> doivent &ecirc;tre actualis&eacute;s avec un
+      <span class="hl2">taux r&eacute;el</span>.<br><br>
+      <strong>Erreur fr&eacute;quente :</strong> m&eacute;langer flux r&eacute;els et taux nominal, ou l'inverse.
+      La VAN est alors biais&eacute;e, m&ecirc;me si le calcul semble correct.
+    </div>
+    <div class="formula">Flux nominaux &rarr; taux nominal &nbsp;|&nbsp; Flux r&eacute;els &rarr; taux r&eacute;el</div>
+    <div class="grid-3">
+      <div class="theory-block" style="margin:0"><span class="hl">VAN &gt; 0</span> → projet crée de la valeur → ✅ Accepter</div>
+      <div class="theory-block" style="margin:0"><span class="hl">VAN = 0</span> → projet couvre exactement le coût du capital → indifférent</div>
+      <div class="theory-block" style="margin:0"><span class="hl">VAN &lt; 0</span> → projet détruit de la valeur → ❌ Rejeter</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur VAN</span></div>
+      <div class="control-group"><label>Capital investi I₀ (k€)</label><input type="number" id="vanI0" value="900" oninput="updateVAN()"></div>
+      <div class="control-group"><label>Taux d'actualisation k (%)</label><div class="range-row"><input type="range" id="vanK" min="0" max="30" step=".5" value="8" oninput="updateVAN()"><span class="range-val" id="vanKV">8.0%</span></div></div>
+      <div class="control-group"><label>Nombre de périodes</label><input type="number" id="vanN" value="5" min="1" max="10" oninput="updateVAN(); buildFluxInputs();"></div>
+      <p style="font-size:.75rem;color:var(--text2);margin:.5rem 0 .25rem;text-transform:uppercase;letter-spacing:.03em">FNT par période (k€)</p>
+      <div class="flux-input" id="vanFluxInputs"></div>
+      <div class="control-group" style="margin-top:.5rem"><label>VR nette IS à la dernière période (k€)</label><input type="number" id="vanVR" value="10" oninput="updateVAN()"></div>
+      <div class="grid-3" style="margin-top:.75rem">
+        <div class="stat-box"><span class="stat-val" id="vanResult">—</span><span class="stat-lbl">VAN (k€)</span></div>
+        <div class="stat-box"><span class="stat-val" id="vanTRI">—</span><span class="stat-lbl">TRI</span></div>
+        <div class="stat-box"><span class="stat-val" id="vanDR">—</span><span class="stat-lbl">DR (années)</span></div>
+      </div>
+      <div id="vanVerdict" style="margin-top:.75rem"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Courbe VAN = f(taux)</div>
+      <div class="chart-wrap"><canvas id="vanChart"></canvas></div>
+      <p class="note">Le point d'intersection avec l'axe des x est le TRI. La pente négative reflète la sensibilité de la VAN au taux d'actualisation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRI ════════════════════════════════════════════════════ -->
+<div id="tri" class="section">
+  <div class="section-hero">
+    <h1>TRI — Taux de Rendement Interne</h1>
+    <p>Taux pour lequel la VAN est nulle. Coût maximum du capital pour financer l'investissement.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Définition &amp; interprétation</span></div>
+      <div class="theory-block">
+        <span class="hl">TRI = taux tel que VAN(TRI) = 0</span><br><br>
+        <strong>Règle de décision :</strong><br>
+        ✅ Si TRI &gt; taux de rejet (ex. CMPC) → projet acceptable<br>
+        ❌ Si TRI &lt; taux de rejet → projet rejeté<br><br>
+        <strong>Hypothèse implicite :</strong> les FNT intermédiaires sont réinvestis au TRI. Cette hypothèse est souvent irréaliste (TRI ≠ coût du capital).<br><br>
+        Le TRI = <span class="hl2">coût maximum du capital</span> susceptible de financer l'investissement.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge yellow">TRI Global (TRIM)</span> — Réinvestissement réaliste</div>
+      <div class="theory-block">
+        Pour corriger l'hypothèse de réinvestissement au TRI, on calcule le <strong>TRI global</strong> (TRIM) :<br><br>
+        <span class="hl">FNT réinvestis au taux r (ex. CMPC ou taux sans risque)</span> jusqu'à la fin du projet → valeur finale cumulée.<br><br>
+        <span class="hl">TRIM = (VF / I₀)^(1/n) − 1</span><br><br>
+        Le TRIM est toujours plus conservateur que le TRI classique lorsque r &lt; TRI.
+      </div>
+      <div class="formula orange">TRIM = [(Σ FNT_t × (1+r)^(n−t)) / I₀]^(1/n) − 1</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge orange">Simulateur TRI &amp; TRIM</span></div>
+    <div class="grid-2">
+      <div>
+        <div class="control-group"><label>Capital investi I₀ (k€)</label><input type="number" id="triI0" value="600" oninput="updateTRI()"></div>
+        <div class="control-group"><label>Taux de rejet / CMPC (%)</label><div class="range-row"><input type="range" id="triK" min="1" max="20" step=".5" value="8" oninput="updateTRI()"><span class="range-val" id="triKV">8.0%</span></div></div>
+        <div class="control-group"><label>Taux de réinvestissement TRIM (%)</label><div class="range-row"><input type="range" id="triR" min="1" max="15" step=".5" value="4" oninput="updateTRI()"><span class="range-val" id="triRV">4.0%</span></div></div>
+        <div class="control-group"><label>Nombre de périodes</label><input type="number" id="triN" value="6" min="1" max="10" oninput="updateTRI(); buildTRIInputs();"></div>
+        <p style="font-size:.75rem;color:var(--text2);margin:.5rem 0 .25rem;text-transform:uppercase;letter-spacing:.03em">FNT annuels (k€)</p>
+        <div class="flux-input" id="triFluxInputs"></div>
+      </div>
+      <div>
+        <div class="grid-2" style="margin-bottom:1rem">
+          <div class="stat-box"><span class="stat-val" id="triTRI">—</span><span class="stat-lbl">TRI classique</span></div>
+          <div class="stat-box"><span class="stat-val" id="triTRIM">—</span><span class="stat-lbl">TRI Global (TRIM)</span></div>
+          <div class="stat-box"><span class="stat-val" id="triVAN">—</span><span class="stat-lbl">VAN au taux k</span></div>
+          <div class="stat-box"><span class="stat-val" id="triVF">—</span><span class="stat-lbl">Valeur finale (TRIM)</span></div>
+        </div>
+        <div id="triVerdict"></div>
+        <div class="chart-wrap" style="height:240px;margin-top:1rem"><canvas id="triChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DR ═════════════════════════════════════════════════════ -->
+<div id="dr" class="section">
+  <div class="section-hero">
+    <h1>Délai de Récupération (DR)</h1>
+    <p>Durée nécessaire pour récupérer le capital investi grâce aux flux nets de trésorerie actualisés.</p>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Principe</span></div>
+      <div class="theory-block">
+        Le DR est la durée au bout de laquelle la <strong>somme cumulée des FNT actualisés</strong> atteint le capital investi.<br><br>
+        <span class="hl">Règle :</span> on retient le projet dont le DR est le plus court.<br><br>
+        <span class="hl2">Limites :</span> ne tient pas compte des flux au-delà du DR (néglige la rentabilité globale). Avantage : simple et mesure le risque de liquidité.
+      </div>
+      <div class="formula">DR tel que : Σ[t=1 à DR] FNT_t / (1+k)^t ≥ I₀</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur DR</span></div>
+      <div class="control-group"><label>Capital investi I₀ (k€)</label><input type="number" id="drI0" value="900" oninput="updateDR()"></div>
+      <div class="control-group"><label>Taux d'actualisation (%)</label><div class="range-row"><input type="range" id="drK" min="0" max="20" step=".5" value="8" oninput="updateDR()"><span class="range-val" id="drKV">8.0%</span></div></div>
+      <div class="control-group"><label>Nombre de périodes</label><input type="number" id="drN" value="5" min="1" max="10" oninput="updateDR(); buildDRInputs();"></div>
+      <p style="font-size:.75rem;color:var(--text2);margin:.5rem 0 .25rem;text-transform:uppercase;letter-spacing:.03em">FNT annuels (k€)</p>
+      <div class="flux-input" id="drFluxInputs"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Tableau de récupération cumulée</div>
+    <div style="overflow-x:auto"><table id="drTable">
+      <thead><tr><th>Période</th><th>FNT</th><th>FNT actualisé</th><th>FNT actualisé cumulé</th><th>Capital restant à récupérer</th></tr></thead>
+      <tbody id="drTbody"></tbody>
+    </table></div>
+    <div class="chart-wrap" style="height:260px;margin-top:1rem"><canvas id="drChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ══ COMPARAISON VAN/TRI ═════════════════════════════════════ -->
+<div id="comparaison" class="section">
+  <div class="section-hero">
+    <h1>VAN vs TRI — Contradictions</h1>
+    <p>Quand les deux critères donnent des classements opposés et comment les réconcilier.</p>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="badge">Théorie</span> Pourquoi les critères peuvent se contredire</div>
+    <div class="grid-2">
+      <div class="theory-block">
+        La contradiction VAN/TRI survient lorsque les projets ont :<br>
+        • Des profils de flux très différents (flux précoces vs tardifs)<br>
+        • Des montants d'investissement différents<br><br>
+        <span class="hl">TRI</span> suppose réinvestissement des FNT au TRI → avantage aux projets à flux précoces.<br>
+        <span class="hl3">VAN</span> suppose réinvestissement au taux k → plus réaliste.<br><br>
+        <strong>Taux d'indifférence (Fisher) :</strong> taux pour lequel VAN(A) = VAN(B).
+      </div>
+      <div class="theory-block">
+        <strong>Règle de Pareto :</strong><br>
+        En cas de contradiction, privilégier la <span class="hl3">VAN</span> car :<br>
+        1. Elle mesure la création de valeur absolue<br>
+        2. Son hypothèse de réinvestissement (au taux k) est plus réaliste<br>
+        3. Elle est additive (VAN d'un portefeuille = somme des VAN)<br><br>
+        Le TRI reste utile pour comparer à un taux-cible ou communiquer avec des non-financiers.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge orange">Exemple cours</span> Projets A et B — Flux inversés</div>
+    <div class="theory-block">Investissement identique = <strong>100 k€</strong>. Durée = <strong>4 ans</strong>.<br>
+    Flux A : 10, 20, 40, 55 &nbsp;|&nbsp; Flux B : 60, 40, 10, 5</div>
+    <div class="control-group" style="max-width:300px"><label>Taux d'actualisation (%)</label>
+      <div class="range-row"><input type="range" id="abK" min="0" max="25" step=".5" value="5" oninput="updateAB()"><span class="range-val" id="abKV">5.0%</span></div></div>
+    <div class="grid-2" style="margin:.75rem 0">
+      <div>
+        <div class="grid-2">
+          <div class="stat-box"><span class="stat-val" id="abVANA">—</span><span class="stat-lbl">VAN Projet A</span></div>
+          <div class="stat-box"><span class="stat-val" id="abVANB">—</span><span class="stat-lbl">VAN Projet B</span></div>
+          <div class="stat-box"><span class="stat-val" id="abTRIA">—</span><span class="stat-lbl">TRI Projet A</span></div>
+          <div class="stat-box"><span class="stat-val" id="abTRIB">—</span><span class="stat-lbl">TRI Projet B</span></div>
+        </div>
+        <div id="abVerdict" style="margin-top:.75rem"></div>
+      </div>
+      <div>
+        <div class="stat-box"><span class="stat-val" id="abFisher">—</span><span class="stat-lbl">Taux d'indifférence (Fisher)</span></div>
+        <div class="theory-block" style="margin-top:.75rem" id="abAnalysis">—</div>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="abChart"></canvas></div>
+    <p class="note">À gauche du taux Fisher : la VAN favorise l'un des projets. À droite : l'autre. Le TRI peut classer différemment selon la structure des flux.</p>
+  </div>
+</div>
+
+<!-- ══ SENSIBILITE ═══════════════════════════════════════════ -->
+<div id="sensibilite" class="section">
+  <div class="section-hero">
+    <h1>Analyse de sensibilité &amp; Risque</h1>
+    <p>Mesurer l'impact de la variation des hypothèses sur la rentabilité du projet.</p>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Théorie</span> Sources de risque</div>
+      <div class="theory-block">
+        <strong>Risque économique :</strong> sensibilité du projet à la conjoncture (CA, prix, coûts). Tests de sensibilité → évaluer l'impact sur la VAN et le TRI.<br><br>
+        <strong>Risque social/organisationnel :</strong> remise en cause des modalités d'organisation, impact emploi, réactions sociales négatives.<br><br>
+        <strong>Risque technologique :</strong> maîtrise d'une nouvelle technologie, obsolescence potentielle.<br><br>
+        <strong>Risque environnemental :</strong> renforcement de la législation, notion d'ISR (investissement socialement responsable).
+      </div>
+      <div class="theory-block">
+        <strong>Flexibilité :</strong> l'investissement crée une forme d'irréversibilité → mesurer le degré de flexibilité (possibilité de modifier taille, durée…). Les <span class="hl">options réelles</span> permettent de modéliser cette flexibilité.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Simulateur de sensibilité</span></div>
+      <div class="control-group"><label>I₀ de référence (k€)</label><input type="number" id="sensI0" value="900" oninput="updateSens()"></div>
+      <div class="control-group"><label>FNT annuel de référence (k€)</label><input type="number" id="sensFNT" value="240" oninput="updateSens()"></div>
+      <div class="control-group"><label>Durée (ans)</label><input type="number" id="sensN" value="5" min="1" max="10" oninput="updateSens()"></div>
+      <div class="control-group"><label>VR nette IS (k€)</label><input type="number" id="sensVR" value="10" oninput="updateSens()"></div>
+      <div class="control-group"><label>Taux de base (%)</label><div class="range-row"><input type="range" id="sensK" min="2" max="20" step=".5" value="8" oninput="updateSens()"><span class="range-val" id="sensKV">8.0%</span></div></div>
+      <div class="grid-3" style="margin-top:.75rem">
+        <div class="stat-box"><span class="stat-val" id="sensVANBase">—</span><span class="stat-lbl">VAN de base</span></div>
+        <div class="stat-box"><span class="stat-val" id="sensTRI">—</span><span class="stat-lbl">TRI</span></div>
+        <div class="stat-box"><span class="stat-val" id="sensMargeS">—</span><span class="stat-lbl">Marge de sécurité</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Tableau de sensibilité — VAN selon variations des hypothèses</div>
+    <div style="overflow-x:auto"><table id="sensTable">
+      <thead><tr><th>Variable</th><th>−30%</th><th>−20%</th><th>−10%</th><th>Base</th><th>+10%</th><th>+20%</th><th>+30%</th></tr></thead>
+      <tbody id="sensTbody"></tbody>
+    </table></div>
+    <div class="chart-wrap" style="margin-top:1rem"><canvas id="sensChart"></canvas></div>
+    <p class="note">Les variables dont la courbe est la plus pentue sont les plus sensibles → plus risquées si les prévisions sont incertaines.</p>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="badge yellow">Complément</span> Indice de profitabilité, rationnement et risques non financiers</div>
+    <div class="grid-2">
+      <div>
+        <div class="theory-block">
+          Quand plusieurs projets ont une <strong>VAN positive</strong> mais que le budget est limit&eacute;,
+          la VAN seule ne suffit plus : il faut aussi regarder la <span class="hl">valeur cr&eacute;&eacute;e
+          par euro investi</span>.
+        </div>
+        <div class="formula">IP = VAN / I₀ &nbsp; ou &nbsp; IP = Valeur actuelle des flux futurs / I₀</div>
+        <div class="theory-block">
+          <strong>Lecture :</strong><br>
+          IP &eacute;lev&eacute; = projet efficace quand le capital est rare.<br><br>
+          En rationnement du capital, on privil&eacute;gie les projets qui cr&eacute;ent le plus
+          de valeur compte tenu du budget disponible.
+        </div>
+      </div>
+      <div>
+        <div class="step"><div class="step-num">Exemple rapide</div>Projet A : I₀ = 100, VAN = 20 &rarr; IP = 0.20</div>
+        <div class="step"><div class="step-num">Comparaison</div>Projet B : I₀ = 40, VAN = 12 &rarr; IP = 0.30</div>
+        <div class="theory-block">
+          <strong>Interprétation :</strong> si le budget est abondant, A peut rester pr&eacute;f&eacute;r&eacute;
+          car sa VAN est plus forte.<br><br>
+          Si le budget est <span class="hl2">rationn&eacute;</span>, B utilise moins de capital pour plus
+          de valeur relative.<br><br>
+          <strong>Mini-cas utiles :</strong> automatisation socialement contest&eacute;e, technologie mal ma&icirc;tris&eacute;e,
+          ou projet expos&eacute; &agrave; un durcissement des normes environnementales.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EXERCICES ══════════════════════════════════════════════ -->
+<div id="exercices" class="section">
+  <div class="section-hero">
+    <h1>Exercices guidés</h1>
+    <p>Exercices tirés du TD et du fichier d'exercices — solutions détaillées pas à pas.</p>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('exTab','ex9')">Ex.9 — ProjeX</button>
+    <button class="tab-btn" onclick="showTab('exTab','ex10')">Ex.10 — Ada (TRIM)</button>
+    <button class="tab-btn" onclick="showTab('exTab','ex11')">Ex.11 — Remplacement</button>
+    <button class="tab-btn" onclick="showTab('exTab','ex12')">Ex.12 — P1 vs P2</button>
+  </div>
+
+  <!-- EX 9 -->
+  <div id="exTab-ex9" class="tab-pane active">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> ProjeX — VAN, TRI, DR</div>
+      <div class="theory-block">Capital investi = <strong>900 k€</strong>. DAP = 180/an. Durée = 5 ans. VR nette IS = <strong>10 k€</strong>. CA : 900 (an 1) puis 1 230 (ans 2-5). Charges variables : 360 / 480. Charges fixes : 300/an. Taux IS = 33.33%. Taux exigé = <strong>8%</strong>.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Calcul des FNT</span></div>
+      <div style="overflow-x:auto"><table id="ex9FNT">
+        <thead><tr><th>Poste (k€)</th><th>An 1</th><th>An 2</th><th>An 3</th><th>An 4</th><th>An 5</th></tr></thead>
+        <tbody id="ex9FNTBody"></tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Critères de décision (k=8%)</span></div>
+      <div class="grid-4">
+        <div class="stat-box"><span class="stat-val" id="ex9VAN">—</span><span class="stat-lbl">VAN (k€)</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex9TRI">—</span><span class="stat-lbl">TRI</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex9DR">—</span><span class="stat-lbl">DR (années)</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex9Verdict" style="font-size:1rem">—</span><span class="stat-lbl">Décision</span></div>
+      </div>
+      <div class="chart-wrap" style="margin-top:1rem"><canvas id="ex9Chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge yellow">Extension</span> Avec BFR = 1 mois de CA</div>
+      <div class="theory-block">
+        <strong>Prise en compte du BFR :</strong><br>
+        Le BFR représente 1 mois du CA = CA/12.<br>
+        • An 1 : ΔBFR = 900/12 = <mark>75 k€</mark> → déduire du FNT de l'an 1<br>
+        • An 2 : ΔBFR supplémentaire = (1230−900)/12 = <mark>27.5 k€</mark> → déduire du FNT de l'an 2<br>
+        • An 5 : récupération totale BFR = 1230/12 = <mark>102.5 k€</mark> → ajouter au FNT de l'an 5
+      </div>
+      <div class="grid-2">
+        <div class="stat-box"><span class="stat-val" id="ex9VANbfr">—</span><span class="stat-lbl">VAN avec BFR (k€)</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex9DeltaVAN">—</span><span class="stat-lbl">Impact du BFR sur VAN</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EX 10 -->
+  <div id="exTab-ex10" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Société Ada — VAN &amp; TRIM</div>
+      <div class="theory-block">Investissement = <strong>6 M€</strong> en équipements. CAF d'exploitation supplémentaire = <strong>1.4 M€/an</strong> pendant <strong>6 ans</strong>. VR nulle. Coût du capital = <strong>8%</strong>. Taux de réinvestissement pour TRIM = <strong>4%</strong>.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Solution</span></div>
+      <div class="step"><div class="step-num">VAN (taux k=8%)</div>VAN = −6 000 + 1 400 × [(1−1.08⁻⁶)/0.08] = −6 000 + 1 400 × 4.6229 = −6 000 + <mark>6 472</mark> = <mark>+472 k€</mark> → ✅ Projet acceptable</div>
+      <div class="step"><div class="step-num">TRI classique</div>TRI tel que VAN = 0 → TRI ≈ <span id="ex10TRI">—</span></div>
+      <div class="step"><div class="step-num">Valeur Finale (réinvestissement à 4%)</div>VF = Σ 1 400 × (1.04)^(6−t) pour t=1..6 = 1 400 × [(1.04⁶−1)/0.04] ≈ <span id="ex10VF">—</span></div>
+      <div class="step"><div class="step-num">TRIM</div>TRIM = (VF / 6 000)^(1/6) − 1 = <span id="ex10TRIM">—</span></div>
+      <div class="theory-block" style="margin-top:.75rem" id="ex10Comment">—</div>
+      <div class="grid-4" style="margin-top:.75rem">
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">+472 k€</span><span class="stat-lbl">VAN</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex10TRIdisplay">—</span><span class="stat-lbl">TRI classique</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex10TRIMdisplay">—</span><span class="stat-lbl">TRIM (r=4%)</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent)">8.0%</span><span class="stat-lbl">Taux exigé (k)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EX 11 -->
+  <div id="exTab-ex11" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Remplacement d'équipement</div>
+      <div class="theory-block">
+        <strong>Ancien :</strong> acquis N-2 pour 420 k€, amorti linéaire/5 ans. Production 10 000 p. à 140 €/p. Coût production 75 €/p. Charges fixes 400 k€. Vendu pour <strong>108 k€</strong>.<br>
+        <strong>Nouveau :</strong> 720 k€, amorti linéaire/5 ans. 12 000 p. à 140 €/p. Économie 20% sur MP (40% du coût variable). Charges fixes 450 k€.<br>
+        k = 12%, IS = 33.33%.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Solution guidée</span></div>
+      <div class="step"><div class="step-num">Coût variable nouveau équipement</div>
+        MP = 40% × 75 = 30 €/p → économie 20% = 6 €/p → nouvelle MP = 24 €/p<br>
+        Coût variable nouveau = 75 − 6 = <mark>69 €/p</mark>
+      </div>
+      <div class="step"><div class="step-num">Plus-value cession ancien équipement</div>
+        VCN à N+1 = 420 − (420/5)×3 = 420 − 252 = <mark>168 k€</mark><br>
+        Prix cession = 108 k€ &lt; VCN → <span class="hl2">Moins-value = 60 k€</span> → économie IS = 60×(1/3) = 20 k€<br>
+        Produit net cession = 108 + 20 = <mark>128 k€</mark>
+      </div>
+      <div class="step"><div class="step-num">Capital investi net</div>I₀ = 720 − 128 = <mark>592 k€</mark></div>
+      <div class="step"><div class="step-num">FNT différentiels annuels</div>
+        CA_supp = (12 000−10 000)×140 = <mark>+280 k€</mark><br>
+        Charges variables : Ancien = 10 000×75 = 750, Nouveau = 12 000×69 = 828 → variation = <span class="hl2">−78 k€</span><br>
+        Charges fixes : Δ = −50 k€<br>
+        DAP : Ancien = 420/5 = 84, Nouveau = 720/5 = 144 → ΔDAP = −60 k€<br>
+        ΔEBE = 280 − 78 − 50 = <mark>152 k€</mark><br>
+        ΔFNT = ΔEBE×(2/3) + ΔDAP×(1/3) = 101.3 + 20 = <mark>121.3 k€</mark>
+      </div>
+      <div class="grid-3" style="margin-top:.75rem">
+        <div class="stat-box"><span class="stat-val" id="ex11VAN">—</span><span class="stat-lbl">VAN (k=12%)</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex11TRI">—</span><span class="stat-lbl">TRI</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex11Verdict" style="font-size:1rem">—</span><span class="stat-lbl">Décision</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EX 12 -->
+  <div id="exTab-ex12" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Projets P1 et P2 — Contradiction VAN/TRI</div>
+      <div class="theory-block">
+        I₀ = <strong>100 k€</strong> pour les deux projets.<br>
+        P1 : flux = 90, 20, 20 (sur 3 ans) — flux précoces importants.<br>
+        P2 : flux = 10, 20, 130 (sur 3 ans) — flux tardifs importants.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur interactif</span></div>
+      <div class="control-group" style="max-width:350px"><label>Taux d'actualisation (%)</label>
+        <div class="range-row"><input type="range" id="p12K" min="0" max="40" step=".5" value="8" oninput="updateP12()"><span class="range-val" id="p12KV">8.0%</span></div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <div class="grid-2">
+            <div class="stat-box"><span class="stat-val" id="p12VAN1">—</span><span class="stat-lbl">VAN P1</span></div>
+            <div class="stat-box"><span class="stat-val" id="p12VAN2">—</span><span class="stat-lbl">VAN P2</span></div>
+            <div class="stat-box"><span class="stat-val" id="p12TRI1">—</span><span class="stat-lbl">TRI P1</span></div>
+            <div class="stat-box"><span class="stat-val" id="p12TRI2">—</span><span class="stat-lbl">TRI P2</span></div>
+          </div>
+          <div class="stat-box" style="margin-top:.75rem"><span class="stat-val" id="p12Fisher">—</span><span class="stat-lbl">Taux d'indifférence (Fisher)</span></div>
+        </div>
+        <div id="p12Analysis" class="theory-block">—</div>
+      </div>
+      <div class="chart-wrap" style="margin-top:1rem"><canvas id="p12Chart"></canvas></div>
+      <p class="note">Le taux d'indifférence est l'intersection des deux courbes de VAN. En dessous → préférer P2 (VAN plus haute). Au dessus → préférer P1.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ QUIZ ═══════════════════════════════════════════════════ -->
+<div id="quiz" class="section">
+  <div class="section-hero" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+    <div><h1>Quiz — Choix d'investissement</h1><p>Testez vos connaissances sur les critères de sélection de projet.</p></div>
+    <div class="score-ctr">Score : <span id="qScore" style="color:var(--accent);font-size:1.1rem;font-weight:600">0</span> / <span id="qTotal">11</span></div>
+  </div>
+  <div id="quizContainer"></div>
+  <div style="text-align:center;margin-top:1rem"><button class="btn" onclick="resetQuiz()">🔄 Recommencer</button></div>
+</div>
+
+</main>
+<script>
+// ════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════
+function go(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+id+"'"))b.classList.add('active');});
+  window.scrollTo(0,0);
+}
+function showTab(g,id){
+  const pfx=g+'-';
+  document.querySelectorAll('[id^="'+pfx+'"]').forEach(p=>p.classList.remove('active'));
+  document.getElementById(pfx+id).classList.add('active');
+  const sec=document.getElementById(pfx+id).closest('main > *');
+  if(sec)sec.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active');if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+id+"'"))b.classList.add('active');});
+}
+
+// ════════════════════════════════════
+// CHARTS & UTILS
+// ════════════════════════════════════
+const C={}; // charts registry
+function dk(id){if(C[id]){C[id].destroy();delete C[id];}}
+function bO(xl='',yl=''){return{responsive:true,maintainAspectRatio:false,animation:{duration:300},
+  plugins:{legend:{labels:{color:'#8892a4',font:{family:"'IBM Plex Sans'"}}},tooltip:{backgroundColor:'#13161e',borderColor:'#252a38',borderWidth:1,titleColor:'#e8ecf4',bodyColor:'#8892a4'}},
+  scales:{x:{title:{display:!!xl,text:xl,color:'#8892a4'},grid:{color:'rgba(37,42,56,.8)'},ticks:{color:'#8892a4'}},
+          y:{title:{display:!!yl,text:yl,color:'#8892a4'},grid:{color:'rgba(37,42,56,.8)'},ticks:{color:'#8892a4'}}}};}
+function f(v,d=2,s=''){return(typeof v==='number'&&!isNaN(v)&&isFinite(v))?v.toFixed(d)+s:'—';}
+function fp(v){return f(v*100,2,'%');}
+function fc(v,d=1){return f(v,d,' k€');}
+function colorVal(v){return v>0?'var(--accent3)':v<0?'var(--danger)':'var(--accent4)';}
+
+function calcTRI(fluxes,guess=0.1){
+  let r=guess;
+  for(let i=0;i<300;i++){
+    let fv=0,dv=0;
+    fluxes.forEach((fi,t)=>{fv+=fi/((1+r)**t);dv+=-t*fi/((1+r)**(t+1));});
+    if(Math.abs(dv)<1e-14)break;
+    const nr=r-fv/dv;
+    if(Math.abs(nr-r)<1e-9){r=nr;break;}
+    r=Math.max(-0.99,Math.min(10,nr));
+  }
+  return r;
+}
+function calcVAN(fluxes,k){return fluxes.reduce((s,f,t)=>s+f/((1+k)**t),0);}
+function calcDR(I0,fnts,k){
+  let cum=0;
+  for(let t=0;t<fnts.length;t++){
+    const prev=cum;
+    cum+=fnts[t]/((1+k)**( t+1));
+    if(cum>=I0){
+      const frac=(I0-prev)/(cum-prev);
+      return t+frac;
+    }
+  }
+  return Infinity;
+}
+
+// ════════════════════════════════════
+// CAPITAL INVESTI
+// ════════════════════════════════════
+function updateCap(){
+  const prix=+document.getElementById('capPrix').value;
+  const frais=+document.getElementById('capFrais').value;
+  const ca=+document.getElementById('capCA').value;
+  const bfr=+document.getElementById('capBFR').value;
+  const cess=+document.getElementById('capCess').value;
+  document.getElementById('capPrixV').textContent=prix;
+  document.getElementById('capFraisV').textContent=frais;
+  document.getElementById('capCAV').textContent=ca;
+  document.getElementById('capBFRV').textContent=bfr+' mois';
+  document.getElementById('capCessV').textContent=cess;
+  const deltaBFR=bfr*ca/12;
+  const I0=prix+frais+deltaBFR-cess;
+  document.getElementById('capDeltaBFR').textContent=f(deltaBFR,1);
+  document.getElementById('capI0').textContent=f(I0,1);
+  document.getElementById('capBFRRec').textContent=f(deltaBFR,1);
+}
+updateCap();
+
+// ════════════════════════════════════
+// VALEUR RESIDUELLE
+// ════════════════════════════════════
+function updateVR(){
+  const acq=+document.getElementById('vrAcq').value;
+  const da=+document.getElementById('vrDureAmort').value;
+  const dp=+document.getElementById('vrDureProjet').value;
+  const prix=+document.getElementById('vrPrix').value;
+  const is=+document.getElementById('vrIS').value/100;
+  document.getElementById('vrAcqV').textContent=acq;
+  document.getElementById('vrDureAmortV').textContent=da;
+  document.getElementById('vrDureProjetV').textContent=dp;
+  document.getElementById('vrPrixV').textContent=prix;
+  document.getElementById('vrISV').textContent=Math.round(is*100)+'%';
+  const vcn=Math.max(0,acq-acq/da*dp);
+  const pv=prix-vcn;
+  const vrNet=prix-Math.max(0,pv)*is;
+  document.getElementById('vrVCN').textContent=f(vcn,1);
+  document.getElementById('vrPlusValue').textContent=f(pv,1);
+  document.getElementById('vrNetIS').textContent=f(vrNet,1);
+  document.getElementById('vrNetIS').style.color=vrNet>0?'var(--accent3)':'var(--danger)';
+}
+updateVR();
+
+// ════════════════════════════════════
+// EXEMPLE COURS FNT (160 k€)
+// ════════════════════════════════════
+function initExCours(){
+  const I=160,n=5,IS=1/3,DAP=160/5;
+  const CA=[210,240,240,240,240];
+  const CV=[100,120,120,120,120];
+  const CF=44;
+  const rows=[
+    {lbl:'Chiffre d\'affaires',vals:CA,color:''},
+    {lbl:'− Charges variables',vals:CV.map(v=>-v),color:''},
+    {lbl:'− Charges fixes',vals:Array(5).fill(-CF),color:''},
+    {lbl:'= EBE',vals:CA.map((c,i)=>c-CV[i]-CF),color:'var(--accent4)'},
+    {lbl:'− DAP',vals:Array(5).fill(-DAP),color:''},
+    {lbl:'= Résultat avant IS',vals:CA.map((c,i)=>c-CV[i]-CF-DAP),color:''},
+    {lbl:'− IS (si positif)',vals:CA.map((c,i)=>-Math.max(0,(c-CV[i]-CF-DAP))*IS),color:''},
+    {lbl:'= Résultat net',vals:CA.map((c,i)=>(c-CV[i]-CF-DAP)-Math.max(0,(c-CV[i]-CF-DAP))*IS),color:''},
+    {lbl:'+ DAP',vals:Array(5).fill(DAP),color:''},
+    {lbl:'= CAF / FNT',vals:CA.map((c,i)=>{const ebt=c-CV[i]-CF-DAP;const is2=Math.max(0,ebt)*IS;return ebt-is2+DAP;}),color:'var(--accent3)'},
+  ];
+  const tbody=document.getElementById('tbodyExCours');
+  tbody.innerHTML=rows.map(r=>`<tr${r.color?` style="color:${r.color}"`:''}><td class="lbl">${r.lbl}</td>${r.vals.map(v=>`<td style="color:${r.color||colorVal(v)}">${f(v,2)}</td>`).join('')}</tr>`).join('');
+}
+initExCours();
+
+// ════════════════════════════════════
+// CALCULATEUR FNT LIBRE
+// ════════════════════════════════════
+function buildFNTInputs(){
+  const n=+document.getElementById('fntN').value||5;
+  ['fntCAInputs','fntChargeInputs'].forEach((id,isCharge)=>{
+    const def=isCharge?[360,480,480,480,480]:[900,1230,1230,1230,1230];
+    document.getElementById(id).innerHTML=Array.from({length:n},(_,i)=>`<input type="number" class="fnt-ca-${isCharge}" id="${id}-${i}" value="${def[i]||200}" oninput="updateFNTCalc()">`).join('');
+  });
+  updateFNTCalc();
+}
+function updateFNTCalc(){
+  const I=+document.getElementById('fntI').value||900;
+  const n=+document.getElementById('fntN').value||5;
+  const IS=+document.getElementById('fntIS').value/100;
+  const VR=+document.getElementById('fntVR').value||0;
+  const BFRrec=+document.getElementById('fntBFRRec').value||0;
+  const DAP=I/n;
+  const head=document.getElementById('fntCalcHead');
+  head.innerHTML=`<th>Poste (k€)</th>`+Array.from({length:n},(_,i)=>`<th>An ${i+1}</th>`).join('');
+  const CAs=Array.from({length:n},(_,i)=>+(document.getElementById('fntCAInputs-'+i)||{value:900}).value||900);
+  const CHs=Array.from({length:n},(_,i)=>+(document.getElementById('fntChargeInputs-'+i)||{value:400}).value||400);
+  const EBEs=CAs.map((ca,i)=>ca-CHs[i]);
+  const RNs=EBEs.map(e=>e-DAP);
+  const ISs=RNs.map(rn=>Math.max(0,rn)*IS);
+  const FNTs=RNs.map((rn,i)=>rn-ISs[i]+DAP);
+  const FNTfin=[...FNTs];
+  FNTfin[n-1]+=VR+BFRrec;
+  const rows=[
+    ['CA',CAs],['− Charges',CHs.map(v=>-v)],['= EBE',EBEs,'var(--accent4)'],
+    ['− DAP',Array(n).fill(-DAP)],['= Résultat av. IS',RNs],['− IS',ISs.map(v=>-v)],
+    ['= RN',RNs.map((rn,i)=>rn-ISs[i])],['+ DAP',Array(n).fill(DAP)],
+    ['= FNT',FNTfin,'var(--accent3)']
+  ];
+  const tbody=document.getElementById('fntCalcBody');
+  tbody.innerHTML=rows.map(r=>`<tr${r[2]?` style="color:${r[2]}"`:''}><td class="lbl">${r[0]}</td>${r[1].map(v=>`<td style="color:${r[2]||colorVal(v)}">${f(v,1)}</td>`).join('')}</tr>`).join('');
+}
+buildFNTInputs();
+
+// ════════════════════════════════════
+// VAN SECTION
+// ════════════════════════════════════
+let vanFluxDefault=[240,300,300,300,300];
+function buildFluxInputs(){
+  const n=+document.getElementById('vanN').value||5;
+  const c=document.getElementById('vanFluxInputs');
+  c.innerHTML=Array.from({length:n},(_,i)=>`<input type="number" id="vf-${i}" value="${vanFluxDefault[i]||240}" oninput="updateVAN()">`).join('');
+}
+function getVANFluxes(){
+  const n=+document.getElementById('vanN').value||5;
+  const vr=+document.getElementById('vanVR').value||0;
+  const fs=Array.from({length:n},(_,i)=>+(document.getElementById('vf-'+i)||{value:240}).value||240);
+  fs[n-1]+=vr;
+  return fs;
+}
+function updateVAN(){
+  const I0=+document.getElementById('vanI0').value||900;
+  const k=+document.getElementById('vanK').value/100;
+  document.getElementById('vanKV').textContent=(k*100).toFixed(1)+'%';
+  const fnts=getVANFluxes();
+  const allF=[-I0,...fnts];
+  const van=calcVAN(allF,k);
+  const tri=calcTRI(allF);
+  const dr=calcDR(I0,fnts,k);
+  document.getElementById('vanResult').textContent=fc(van);
+  document.getElementById('vanResult').style.color=colorVal(van);
+  document.getElementById('vanTRI').textContent=fp(tri);
+  document.getElementById('vanDR').textContent=isFinite(dr)?f(dr,2,' ans'):'> n';
+  const vd=document.getElementById('vanVerdict');
+  if(van>0){vd.innerHTML='<div class="verdict accept">✅ VAN positive — projet créateur de valeur</div>';}
+  else if(van<0){vd.innerHTML='<div class="verdict reject">❌ VAN négative — projet destructeur de valeur</div>';}
+  else{vd.innerHTML='<div class="verdict warn">⚖️ VAN nulle — projet à l\'équilibre</div>';}
+  // Chart
+  const rates=Array.from({length:41},(_,i)=>i*1);
+  const vans=rates.map(r=>calcVAN([-I0,...fnts],r/100));
+  dk('van');
+  const ctx=document.getElementById('vanChart').getContext('2d');
+  C['van']=new Chart(ctx,{type:'line',data:{labels:rates.map(r=>r+'%'),datasets:[
+    {label:'VAN (k€)',data:vans,borderColor:'#4f9cf9',backgroundColor:'rgba(79,156,249,.08)',fill:true,borderWidth:2,pointRadius:0,tension:.3},
+    {label:'VAN = 0',data:Array(41).fill(0),borderColor:'#f95f5f',borderDash:[5,3],pointRadius:0,borderWidth:1.5},
+    {label:'Taux k',data:rates.map(r=>r/100===k?calcVAN([-I0,...fnts],r/100):null),pointRadius:8,backgroundColor:'#f97b4f',borderColor:'#fff',borderWidth:2,showLine:false}
+  ]},options:{...bO('Taux d\'actualisation (%)','VAN (k€)')}});
+}
+buildFluxInputs(); updateVAN();
+
+// ════════════════════════════════════
+// TRI SECTION
+// ════════════════════════════════════
+let triFluxDefault=[1400,1400,1400,1400,1400,1400];
+function buildTRIInputs(){
+  const n=+document.getElementById('triN').value||6;
+  document.getElementById('triFluxInputs').innerHTML=Array.from({length:n},(_,i)=>`<input type="number" id="tf-${i}" value="${triFluxDefault[i]||1400}" oninput="updateTRI()">`).join('');
+}
+function updateTRI(){
+  const I0=+document.getElementById('triI0').value||6000;
+  const k=+document.getElementById('triK').value/100;
+  const r=+document.getElementById('triR').value/100;
+  const n=+document.getElementById('triN').value||6;
+  document.getElementById('triKV').textContent=(k*100).toFixed(1)+'%';
+  document.getElementById('triRV').textContent=(r*100).toFixed(1)+'%';
+  const fnts=Array.from({length:n},(_,i)=>+(document.getElementById('tf-'+i)||{value:1400}).value||1400);
+  const allF=[-I0,...fnts];
+  const tri=calcTRI(allF);
+  const van=calcVAN(allF,k);
+  // TRIM: réinvestissement des FNT au taux r
+  const vf=fnts.reduce((s,fi,i)=>s+fi*((1+r)**(n-1-i)),0);
+  const trim=Math.pow(vf/I0,1/n)-1;
+  document.getElementById('triTRI').textContent=fp(tri);
+  document.getElementById('triTRI').style.color=tri>k?'var(--accent3)':'var(--danger)';
+  document.getElementById('triTRIM').textContent=fp(trim);
+  document.getElementById('triTRIM').style.color=trim>k?'var(--accent3)':'var(--danger)';
+  document.getElementById('triVAN').textContent=fc(van);
+  document.getElementById('triVAN').style.color=colorVal(van);
+  document.getElementById('triVF').textContent=fc(vf);
+  const vd=document.getElementById('triVerdict');
+  if(tri>k){vd.innerHTML='<div class="verdict accept">✅ TRI '+fp(tri)+' > k '+fp(k)+' — Projet acceptable</div>';}
+  else{vd.innerHTML='<div class="verdict reject">❌ TRI '+fp(tri)+' < k '+fp(k)+' — Projet rejeté</div>';}
+  if(trim<tri){vd.innerHTML+=`<div class="verdict warn" style="margin-top:.4rem">⚠️ TRIM (${fp(trim)}) < TRI (${fp(tri)}) — TRI surestimait la rentabilité</div>`;}
+  // Chart VAN vs taux
+  const rates=Array.from({length:41},(_,i)=>i);
+  const vans=rates.map(rat=>calcVAN(allF,rat/100));
+  dk('tri');
+  const ctx=document.getElementById('triChart').getContext('2d');
+  C['tri']=new Chart(ctx,{type:'line',data:{labels:rates.map(r=>r+'%'),datasets:[
+    {label:'VAN (k€)',data:vans,borderColor:'#4f9cf9',fill:false,borderWidth:2,pointRadius:0,tension:.3},
+    {label:'VAN = 0',data:Array(41).fill(0),borderColor:'#f95f5f',borderDash:[5,3],pointRadius:0,borderWidth:1.5}
+  ]},options:{...bO('Taux (%)','VAN (k€)')}});
+}
+buildTRIInputs(); updateTRI();
+
+// ════════════════════════════════════
+// DR SECTION
+// ════════════════════════════════════
+let drFluxDefault=[240,300,300,300,300];
+function buildDRInputs(){
+  const n=+document.getElementById('drN').value||5;
+  document.getElementById('drFluxInputs').innerHTML=Array.from({length:n},(_,i)=>`<input type="number" id="drf-${i}" value="${drFluxDefault[i]||240}" oninput="updateDR()">`).join('');
+}
+function updateDR(){
+  const I0=+document.getElementById('drI0').value||900;
+  const k=+document.getElementById('drK').value/100;
+  const n=+document.getElementById('drN').value||5;
+  document.getElementById('drKV').textContent=(k*100).toFixed(1)+'%';
+  const fnts=Array.from({length:n},(_,i)=>+(document.getElementById('drf-'+i)||{value:240}).value||240);
+  let cum=0; const rows=[];
+  for(let t=0;t<n;t++){
+    const fact=fnts[t]/((1+k)**(t+1));
+    cum+=fact;
+    rows.push({t:t+1,fnt:fnts[t],fact,cum,restant:Math.max(0,I0-cum)});
+  }
+  const dr=calcDR(I0,fnts,k);
+  const tbody=document.getElementById('drTbody');
+  tbody.innerHTML=rows.map(r=>{
+    const ok=r.cum>=I0;
+    return `<tr${ok?' class="highlight-row"':''}><td>${r.t}</td><td>${fc(r.fnt)}</td><td>${fc(r.fact)}</td><td style="color:${r.cum>=I0?'var(--accent3)':'var(--text)'}">${fc(r.cum)}</td><td style="color:${r.restant===0?'var(--accent3)':'var(--danger)'}">${fc(r.restant)}</td></tr>`;
+  }).join('');
+  dk('dr');
+  const ctx=document.getElementById('drChart').getContext('2d');
+  C['dr']=new Chart(ctx,{type:'line',data:{labels:rows.map(r=>'An '+r.t),datasets:[
+    {label:'FNT actualisés cumulés (k€)',data:rows.map(r=>r.cum),borderColor:'#4f9cf9',backgroundColor:'rgba(79,156,249,.08)',fill:true,borderWidth:2,pointRadius:5,tension:.3},
+    {label:'Capital investi I₀',data:Array(n).fill(I0),borderColor:'#f95f5f',borderDash:[5,3],pointRadius:0,borderWidth:2}
+  ]},options:{...bO('Année','Cumul (k€)')}});
+}
+buildDRInputs(); updateDR();
+
+// ════════════════════════════════════
+// VAN vs TRI (A vs B — cours)
+// ════════════════════════════════════
+function updateAB(){
+  const k=+document.getElementById('abK').value/100;
+  document.getElementById('abKV').textContent=(k*100).toFixed(1)+'%';
+  const fluxA=[-100,10,20,40,55], fluxB=[-100,60,40,10,5];
+  const vanA=calcVAN(fluxA,k), vanB=calcVAN(fluxB,k);
+  const triA=calcTRI(fluxA), triB=calcTRI(fluxB);
+  document.getElementById('abVANA').textContent=fc(vanA);document.getElementById('abVANA').style.color=colorVal(vanA);
+  document.getElementById('abVANB').textContent=fc(vanB);document.getElementById('abVANB').style.color=colorVal(vanB);
+  document.getElementById('abTRIA').textContent=fp(triA);
+  document.getElementById('abTRIB').textContent=fp(triB);
+  // Fisher intersection
+  let fisher=-1;
+  for(let r=0;r<=0.5;r+=0.001){
+    const d=calcVAN(fluxA,r)-calcVAN(fluxB,r);
+    if(Math.abs(d)<0.5){fisher=r;break;}
+  }
+  document.getElementById('abFisher').textContent=fisher>0?fp(fisher):'—';
+  // Analysis
+  const vanPref=vanA>vanB?'A':'B', triPref=triA>triB?'A':'B';
+  const contradiction=vanPref!==triPref;
+  document.getElementById('abVerdict').innerHTML=contradiction
+    ?`<div class="verdict warn">⚠️ Contradiction : VAN préfère ${vanPref}, TRI préfère ${triPref} → Privilégier la VAN</div>`
+    :`<div class="verdict accept">✅ Pas de contradiction : les deux critères préfèrent le projet ${vanPref}</div>`;
+  document.getElementById('abAnalysis').innerHTML=`
+    À ce taux (${fp(k)}), VAN prend la tête : <strong>Projet ${vanPref}</strong>.<br>
+    TRI classique : <strong>Projet ${triPref}</strong> (flux précoces favorisés).<br>
+    ${contradiction?'<span class="hl2">Contradiction → privilégier VAN (plus réaliste).</span>':'<span class="hl3">Cohérence des deux critères à ce taux.</span>'}
+  `;
+  const rates=Array.from({length:51},(_,i)=>i);
+  dk('ab');
+  const ctx=document.getElementById('abChart').getContext('2d');
+  C['ab']=new Chart(ctx,{type:'line',data:{labels:rates.map(r=>r+'%'),datasets:[
+    {label:'VAN Projet A',data:rates.map(r=>calcVAN(fluxA,r/100)),borderColor:'#4f9cf9',fill:false,borderWidth:2,pointRadius:0,tension:.3},
+    {label:'VAN Projet B',data:rates.map(r=>calcVAN(fluxB,r/100)),borderColor:'#f97b4f',fill:false,borderWidth:2,pointRadius:0,tension:.3},
+    {label:'VAN = 0',data:Array(51).fill(0),borderColor:'rgba(255,255,255,.2)',borderDash:[4,4],pointRadius:0,borderWidth:1},
+    {label:'Taux k actuel',data:rates.map((r,i)=>{const rr=r/100;return Math.abs(rr-k)<0.005?calcVAN(fluxA,rr):null;}),pointRadius:8,backgroundColor:'#63e6a0',showLine:false}
+  ]},options:{...bO('Taux (%)','VAN (k€)')}});
+}
+updateAB();
+
+// ════════════════════════════════════
+// SENSIBILITE
+// ════════════════════════════════════
+function updateSens(){
+  const I0=+document.getElementById('sensI0').value||900;
+  const FNTbase=+document.getElementById('sensFNT').value||240;
+  const n=+document.getElementById('sensN').value||5;
+  const VR=+document.getElementById('sensVR').value||10;
+  const k=+document.getElementById('sensK').value/100;
+  document.getElementById('sensKV').textContent=(k*100).toFixed(1)+'%';
+  const makeFNTs=(fnt,vr)=>{const a=Array(n).fill(fnt);a[n-1]+=vr;return a;};
+  const baseFlux=[-I0,...makeFNTs(FNTbase,VR)];
+  const vanBase=calcVAN(baseFlux,k);
+  const tri=calcTRI(baseFlux);
+  document.getElementById('sensVANBase').textContent=fc(vanBase);
+  document.getElementById('sensVANBase').style.color=colorVal(vanBase);
+  document.getElementById('sensTRI').textContent=fp(tri);
+  document.getElementById('sensMargeS').textContent=fp(tri-k);
+  const vars=[
+    {lbl:'FNT (CA/coûts)',fn:(p)=>calcVAN([-I0,...makeFNTs(FNTbase*(1+p),VR)],k)},
+    {lbl:'Taux d\'actualisation',fn:(p)=>calcVAN(baseFlux,k*(1+p))},
+    {lbl:'Capital investi',fn:(p)=>calcVAN([-I0*(1+p),...makeFNTs(FNTbase,VR)],k)},
+    {lbl:'Valeur résiduelle',fn:(p)=>calcVAN([-I0,...makeFNTs(FNTbase,VR*(1+p))],k)},
+  ];
+  const steps=[-0.3,-0.2,-0.1,0,0.1,0.2,0.3];
+  const tbody=document.getElementById('sensTbody');
+  tbody.innerHTML=vars.map(v=>`<tr><td class="lbl">${v.lbl}</td>${steps.map(p=>{const val=v.fn(p);return`<td style="color:${colorVal(val)}">${fc(val)}</td>`;}).join('')}</tr>`).join('');
+  const colors=['#4f9cf9','#f97b4f','#63e6a0','#f9e44f'];
+  dk('sens');
+  const ctx=document.getElementById('sensChart').getContext('2d');
+  C['sens']=new Chart(ctx,{type:'line',data:{labels:steps.map(p=>(p*100).toFixed(0)+'%'),
+    datasets:vars.map((v,i)=>({label:v.lbl,data:steps.map(p=>v.fn(p)),borderColor:colors[i],fill:false,borderWidth:2,pointRadius:3,tension:.2}))},
+    options:{...bO('Variation (%)','VAN (k€)')}});
+}
+updateSens();
+
+// ════════════════════════════════════
+// EX 9 — PROJEX
+// ════════════════════════════════════
+function initEx9(){
+  const I=900,IS=1/3,DAP=180,k=0.08,VR=10;
+  const CA=[900,1230,1230,1230,1230];
+  const CV=[360,480,480,480,480];
+  const CF=300;
+  const EBEs=CA.map((c,i)=>c-CV[i]-CF);
+  const RNs=EBEs.map(e=>e-DAP);
+  const ISs=RNs.map(rn=>Math.max(0,rn)*IS);
+  const FNTs=RNs.map((rn,i)=>rn-ISs[i]+DAP);
+  FNTs[4]+=VR;
+  const tbody=document.getElementById('ex9FNTBody');
+  const rows=[
+    ['CA',CA],['− Charges variables',CV.map(v=>-v)],['− Charges fixes',Array(5).fill(-CF)],
+    ['= EBE',EBEs,'var(--accent4)'],['− DAP',Array(5).fill(-DAP)],['= Résultat av. IS',RNs],
+    ['− IS',ISs.map(v=>-v)],['= Résultat net',RNs.map((rn,i)=>rn-ISs[i])],['+ DAP',Array(5).fill(DAP)],
+    ['= FNT',FNTs,'var(--accent3)']
+  ];
+  tbody.innerHTML=rows.map(r=>`<tr${r[2]?` style="color:${r[2]}"`:''}><td class="lbl">${r[0]}</td>${r[1].map(v=>`<td style="color:${r[2]||colorVal(v)}">${f(v,2)}</td>`).join('')}</tr>`).join('');
+  const allF=[-I,...FNTs];
+  const van=calcVAN(allF,k);
+  const tri=calcTRI(allF);
+  const dr=calcDR(I,FNTs,k);
+  document.getElementById('ex9VAN').textContent=fc(van);document.getElementById('ex9VAN').style.color=colorVal(van);
+  document.getElementById('ex9TRI').textContent=fp(tri);
+  document.getElementById('ex9DR').textContent=isFinite(dr)?f(dr,2,' ans'):'> 5 ans';
+  document.getElementById('ex9Verdict').textContent=van>0?'✅ Acceptable':'❌ Rejeter';
+  document.getElementById('ex9Verdict').style.color=van>0?'var(--accent3)':'var(--danger)';
+  // Chart VAN vs taux
+  const rates=Array.from({length:41},(_,i)=>i);
+  dk('ex9');
+  const ctx=document.getElementById('ex9Chart').getContext('2d');
+  C['ex9']=new Chart(ctx,{type:'line',data:{labels:rates.map(r=>r+'%'),datasets:[
+    {label:'VAN ProjeX (k€)',data:rates.map(rr=>calcVAN(allF,rr/100)),borderColor:'#4f9cf9',backgroundColor:'rgba(79,156,249,.08)',fill:true,borderWidth:2,pointRadius:0,tension:.3},
+    {label:'VAN = 0',data:Array(41).fill(0),borderColor:'#f95f5f',borderDash:[5,3],pointRadius:0,borderWidth:1.5},
+    {label:'k=8%',data:rates.map(r=>r===8?van:null),pointRadius:8,backgroundColor:'#63e6a0',showLine:false}
+  ]},options:{...bO('Taux (%)','VAN (k€)')}});
+  // BFR extension
+  const FNTbfr=[...FNTs];
+  const bfr1=900/12,bfr2=(1230-900)/12,bfrRec=1230/12;
+  FNTbfr[0]-=bfr1; FNTbfr[1]-=bfr2; FNTbfr[4]+=bfrRec;
+  const vanBFR=calcVAN([-I,...FNTbfr],k);
+  document.getElementById('ex9VANbfr').textContent=fc(vanBFR);document.getElementById('ex9VANbfr').style.color=colorVal(vanBFR);
+  document.getElementById('ex9DeltaVAN').textContent=fc(vanBFR-van);document.getElementById('ex9DeltaVAN').style.color=colorVal(vanBFR-van);
+}
+initEx9();
+
+// ════════════════════════════════════
+// EX 10 — ADA
+// ════════════════════════════════════
+function initEx10(){
+  const I=6000,FNT=1400,n=6,k=0.08,r=0.04;
+  const fnts=Array(n).fill(FNT);
+  const tri=calcTRI([-I,...fnts]);
+  const vf=fnts.reduce((s,f,i)=>s+f*(1+r)**(n-1-i),0);
+  const trim=Math.pow(vf/I,1/n)-1;
+  document.getElementById('ex10TRI').textContent=fp(tri);
+  document.getElementById('ex10VF').textContent=fc(vf,0);
+  document.getElementById('ex10TRIM').textContent=fp(trim);
+  document.getElementById('ex10TRIdisplay').textContent=fp(tri);
+  document.getElementById('ex10TRIMdisplay').textContent=fp(trim);
+  document.getElementById('ex10Comment').innerHTML=`Le TRI (${fp(tri)}) > k (8%) → projet acceptable.<br>Le TRIM (${fp(trim)}) < TRI car le taux de réinvestissement (4%) est inférieur au TRI. Le TRI classique <span class="hl2">surestimait</span> la rentabilité. Mais TRIM (${fp(trim)}) > k (8%) → le projet reste acceptable même avec une hypothèse conservatrice.`;
+}
+initEx10();
+
+// ════════════════════════════════════
+// EX 11 — REMPLACEMENT
+// ════════════════════════════════════
+function initEx11(){
+  const I0=592,FNT=121.3,n=5,k=0.12;
+  const fnts=Array(n).fill(FNT);
+  const allF=[-I0,...fnts];
+  const van=calcVAN(allF,k);
+  const tri=calcTRI(allF);
+  document.getElementById('ex11VAN').textContent=fc(van);document.getElementById('ex11VAN').style.color=colorVal(van);
+  document.getElementById('ex11TRI').textContent=fp(tri);
+  document.getElementById('ex11Verdict').textContent=van>0?'✅ Remplacement justifié':'❌ Ne pas remplacer';
+  document.getElementById('ex11Verdict').style.color=van>0?'var(--accent3)':'var(--danger)';
+}
+initEx11();
+
+// ════════════════════════════════════
+// EX 12 — P1 vs P2
+// ════════════════════════════════════
+function updateP12(){
+  const k=+document.getElementById('p12K').value/100;
+  document.getElementById('p12KV').textContent=(k*100).toFixed(1)+'%';
+  const f1=[-100,90,20,20],f2=[-100,10,20,130];
+  const v1=calcVAN(f1,k),v2=calcVAN(f2,k);
+  const t1=calcTRI(f1),t2=calcTRI(f2);
+  document.getElementById('p12VAN1').textContent=fc(v1);document.getElementById('p12VAN1').style.color=colorVal(v1);
+  document.getElementById('p12VAN2').textContent=fc(v2);document.getElementById('p12VAN2').style.color=colorVal(v2);
+  document.getElementById('p12TRI1').textContent=fp(t1);
+  document.getElementById('p12TRI2').textContent=fp(t2);
+  // Fisher
+  let fisher=NaN;
+  for(let r=0;r<=0.8;r+=0.001){const d=calcVAN(f1,r)-calcVAN(f2,r);if(Math.abs(d)<0.2){fisher=r;break;}}
+  document.getElementById('p12Fisher').textContent=isNaN(fisher)?'—':fp(fisher);
+  const vanPref=v1>v2?'P1':'P2', triPref=t1>t2?'P1':'P2';
+  const c=vanPref!==triPref;
+  document.getElementById('p12Analysis').innerHTML=`
+    VAN préfère <strong>${vanPref}</strong> &nbsp;|&nbsp; TRI préfère <strong>${triPref}</strong><br><br>
+    ${c?`<span class="hl2">⚠️ Contradiction !</span> P1 a des flux précoces → TRI élevé mais VAN moindre à faible taux. Privilégier <strong>la VAN</strong>.`
+      :`<span class="hl3">✅ Cohérence : les deux critères s'accordent.</span>`}<br><br>
+    ${isNaN(fisher)?'':'Taux d\'indifférence ≈ '+fp(fisher)+'. En dessous → P2 domine. Au dessus → P1 domine.'}
+  `;
+  const rates=Array.from({length:51},(_,i)=>i);
+  dk('p12');
+  const ctx=document.getElementById('p12Chart').getContext('2d');
+  C['p12']=new Chart(ctx,{type:'line',data:{labels:rates.map(r=>r+'%'),datasets:[
+    {label:'VAN P1',data:rates.map(r=>calcVAN(f1,r/100)),borderColor:'#4f9cf9',fill:false,borderWidth:2.5,pointRadius:0,tension:.3},
+    {label:'VAN P2',data:rates.map(r=>calcVAN(f2,r/100)),borderColor:'#f97b4f',fill:false,borderWidth:2.5,pointRadius:0,tension:.3},
+    {label:'VAN = 0',data:Array(51).fill(0),borderColor:'rgba(255,255,255,.15)',borderDash:[4,4],pointRadius:0,borderWidth:1},
+    {label:'Taux actuel',data:rates.map((r,i)=>{const rr=r/100;return Math.abs(rr-k)<0.005?calcVAN(f1,rr):null;}),pointRadius:8,backgroundColor:'#63e6a0',showLine:false}
+  ]},options:{...bO('Taux (%)','VAN (k€)')}});
+}
+updateP12();
+
+// ════════════════════════════════════
+// QUIZ
+// ════════════════════════════════════
+const QD=[
+  {q:"Un projet d'investissement est acceptable selon le critère de la VAN si :",opts:["VAN < 0","VAN = 0","VAN > 0","VAN > TRI"],ans:2,exp:"VAN > 0 signifie que la valeur actuelle des flux générés dépasse le capital investi. Le projet crée de la valeur pour les actionnaires. C'est le critère principal de sélection."},
+  {q:"Le TRI (Taux de Rendement Interne) est :",opts:["Le taux d'actualisation du CMPC","Le taux pour lequel la VAN est nulle","Le taux de croissance des dividendes","Le taux d'imposition effectif"],ans:1,exp:"Le TRI est le taux qui annule la VAN. Il représente le coût maximum du capital que le projet peut supporter tout en restant rentable. Si TRI > CMPC → projet acceptable."},
+  {q:"Le capital investi I₀ d'un projet inclut :",opts:["Uniquement le prix d'achat HT de l'immobilisation","Le prix HT + frais accessoires + variation du BFR","Le prix TTC + TVA récupérable","Seulement les frais de mise en service"],ans:1,exp:"I₀ = Prix achat HT + Frais accessoires HT (transport, installation) + ΔBFRE. La variation du BFR est une sortie de trésorerie réelle liée à l'accroissement d'activité."},
+  {q:"La CAF d'exploitation se calcule comme :",opts:["Chiffre d'affaires − Charges totales","Résultat net + Dotations aux amortissements","EBE − IS − Investissements","Dividendes + Réserves"],ans:1,exp:"CAF exploitation = RN + DAP (dotations aux amortissements). On peut aussi écrire : EBE × (1−IS) + DAP × IS. Les dotations sont ré-ajoutées car elles sont non décaissables."},
+  {q:"Le délai de récupération (DR) mesure :",opts:["La rentabilité absolue du projet","La durée pour récupérer le capital investi grâce aux FNT","Le taux de rendement annuel moyen","La valeur terminale du projet"],ans:1,exp:"Le DR est la durée nécessaire pour que la somme cumulée des FNT (éventuellement actualisés) atteigne le capital investi. Moins le DR est court, moins le risque de liquidité est élevé."},
+  {q:"En cas de contradiction entre VAN et TRI, il faut généralement :",opts:["Choisir le projet avec le TRI le plus élevé","Rejeter les deux projets","Privilégier la VAN car l'hypothèse de réinvestissement est plus réaliste","Calculer un TRI modifié uniquement"],ans:2,exp:"La VAN est préférable car son hypothèse de réinvestissement au taux k (CMPC) est plus réaliste que le réinvestissement au TRI. De plus, la VAN est additive et mesure la création de valeur absolue."},
+  {q:"Le TRI global (TRIM) diffère du TRI classique car :",opts:["Il prend en compte l'IS","Il suppose que les FNT sont réinvestis à un taux réaliste r (≠ TRI)","Il ne tient pas compte du capital investi","Il est calculé sur une seule période"],ans:1,exp:"Le TRIM (ou TRI global) corrige l'hypothèse de réinvestissement irréaliste du TRI classique. Les FNT sont réinvestis à un taux r (ex. CMPC ou taux sans risque), puis on calcule le taux qui équilibre la valeur finale et l'investissement initial."},
+  {q:"La valeur résiduelle nette d'IS d'un équipement totalement amorti vendu 50 k€ (IS = 33%) vaut :",opts:["50 k€","33.3 k€","16.7 k€","50 × (1 − 0.33) ≈ 33.5 k€"],ans:3,exp:"Si l'équipement est totalement amorti, sa VCN = 0. La plus-value est totale = 50 k€. IS sur plus-value = 50 × 33.33% ≈ 16.67 k€. VR nette IS = 50 − 16.67 ≈ 33.5 k€. On retient 50 × (1−IS)."},
+  {q:"La variation du BFR dans un projet d'investissement est :",opts:["Toujours nulle","Décaissée au démarrage et récupérée en fin de projet","Uniquement liée à l'emprunt bancaire","Une charge déductible de l'IS"],ans:1,exp:"Le ΔBFRE est engagé dès le début du projet (décaissement) car la hausse du CA exige plus de stocks et de créances clients. Il est intégralement récupéré à la fin du projet (les créances sont encaissées, les stocks liquidés)."},
+  {q:"L'analyse de sensibilité d'un projet consiste à :",opts:["Calculer la VAN à un seul taux fixe","Mesurer l'impact de la variation des hypothèses sur la rentabilité","Choisir entre VAN et TRI","Calculer l'IS sur le résultat"],ans:1,exp:"L'analyse de sensibilité évalue comment varie la VAN (ou le TRI) quand on modifie les hypothèses clés : niveau du CA, des coûts, du taux d'actualisation, de la durée… Les variables dont la VAN est très sensible représentent les principaux risques."},
+  {q:"Le taux d'indifférence (taux de Fisher) entre deux projets est :",opts:["Le TRI du meilleur projet","Le taux pour lequel les deux VAN sont égales","Le taux sans risque","La moyenne des deux TRI"],ans:1,exp:"Le taux de Fisher est le taux d'actualisation pour lequel VAN(P1) = VAN(P2). En dessous de ce taux, un projet est préférable selon la VAN ; au-dessus, c'est l'autre. Il correspond à l'intersection des deux courbes VAN = f(taux)."}
+];
+let qScore=0,qAns=new Array(QD.length).fill(false);
+function renderQuiz(){
+  document.getElementById('quizContainer').innerHTML=QD.map((q,qi)=>`
+    <div class="card"><div class="quiz-q">${qi+1}. ${q.q}</div>
+    ${q.opts.map((o,oi)=>`<div class="quiz-opt" id="qo-${qi}-${oi}" onclick="ansQ(${qi},${oi})">${o}</div>`).join('')}
+    <div class="quiz-feedback" id="qfb-${qi}"></div></div>`).join('');
+  document.getElementById('qTotal').textContent=QD.length;
+}
+function ansQ(qi,oi){
+  if(qAns[qi])return;qAns[qi]=true;
+  const q=QD[qi];
+  document.querySelectorAll(`[id^="qo-${qi}-"]`).forEach(e=>e.style.pointerEvents='none');
+  document.getElementById(`qo-${qi}-${oi}`).classList.add(oi===q.ans?'correct':'wrong');
+  if(oi!==q.ans)document.getElementById(`qo-${qi}-${q.ans}`).classList.add('correct');
+  const fb=document.getElementById(`qfb-${qi}`);
+  if(oi===q.ans){qScore++;fb.className='quiz-feedback show ok';fb.textContent='✅ Correct ! '+q.exp;}
+  else{fb.className='quiz-feedback show ko';fb.textContent='❌ Incorrect. '+q.exp;}
+  document.getElementById('qScore').textContent=qScore;
+}
+function resetQuiz(){qScore=0;qAns=new Array(QD.length).fill(false);document.getElementById('qScore').textContent=0;renderQuiz();}
+renderQuiz();
+</script>
+</body>
+</html>

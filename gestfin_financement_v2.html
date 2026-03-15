@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Financière — Choix de Financement</title>
+<script src="../node_modules/chart.js/dist/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f14; --surface: #13161e; --surface2: #1a1e2a; --border: #252a38;
+    --accent: #4f9cf9; --accent2: #f97b4f; --accent3: #63e6a0; --accent4: #f9e44f;
+    --text: #e8ecf4; --text2: #8892a4; --text3: #5a6478; --danger: #f95f5f;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+  header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 2rem; position:sticky; top:0; z-index:100; display:flex; align-items:center; gap:2rem; height:60px; }
+  .logo { font-family:'Playfair Display',serif; font-size:1.05rem; color:var(--accent); white-space:nowrap; }
+  .logo span { color:var(--text2); font-size:0.72rem; font-family:'IBM Plex Sans',sans-serif; display:block; }
+  nav { display:flex; gap:0.2rem; overflow-x:auto; flex:1; scrollbar-width:thin; }
+  nav::-webkit-scrollbar { height:2px; } nav::-webkit-scrollbar-thumb { background:var(--border); }
+  .nav-btn { background:none; border:1px solid transparent; color:var(--text2); cursor:pointer; padding:0.35rem 0.8rem; border-radius:4px; font-family:'IBM Plex Sans',sans-serif; font-size:0.78rem; white-space:nowrap; transition:all .15s; }
+  .nav-btn:hover { color:var(--text); background:var(--surface2); }
+  .nav-btn.active { color:var(--accent); background:rgba(79,156,249,0.1); border-color:rgba(79,156,249,0.3); }
+
+  main { padding:2rem; max-width:1400px; margin:0 auto; }
+  .section { display:none; } .section.active { display:block; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.5rem; margin-bottom:1.5rem; }
+  .card-title { font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--text); margin-bottom:1rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
+
+  .badge { font-family:'IBM Plex Mono',monospace; font-size:0.62rem; padding:2px 8px; border-radius:3px; background:rgba(79,156,249,0.15); color:var(--accent); border:1px solid rgba(79,156,249,0.3); font-weight:600; letter-spacing:.05em; white-space:nowrap; }
+  .badge.orange { background:rgba(249,123,79,0.15); color:var(--accent2); border-color:rgba(249,123,79,0.3); }
+  .badge.green { background:rgba(99,230,160,0.15); color:var(--accent3); border-color:rgba(99,230,160,0.3); }
+  .badge.yellow { background:rgba(249,228,79,0.15); color:var(--accent4); border-color:rgba(249,228,79,0.3); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; }
+  .grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; }
+  @media(max-width:900px) { .grid-2,.grid-3,.grid-4 { grid-template-columns:1fr; } }
+
+  .control-group { margin-bottom:.9rem; }
+  .control-group label { display:block; font-size:0.72rem; color:var(--text2); margin-bottom:.35rem; font-weight:500; letter-spacing:.03em; text-transform:uppercase; }
+  input[type="range"] { width:100%; accent-color:var(--accent); height:4px; }
+  .range-row { display:flex; align-items:center; gap:1rem; }
+  .range-val { font-family:'IBM Plex Mono',monospace; font-size:0.85rem; color:var(--accent); min-width:55px; text-align:right; font-weight:600; }
+  input[type="number"], input[type="text"] { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:.45rem .7rem; border-radius:5px; font-family:'IBM Plex Mono',monospace; font-size:0.82rem; width:100%; transition:border-color .15s; }
+  input[type="number"]:focus, input[type="text"]:focus { outline:none; border-color:var(--accent); }
+
+  .btn { background:rgba(79,156,249,0.15); border:1px solid rgba(79,156,249,0.4); color:var(--accent); padding:.45rem 1.1rem; border-radius:5px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; font-size:0.82rem; font-weight:500; transition:all .15s; }
+  .btn:hover { background:rgba(79,156,249,0.25); }
+  .btn.orange { background:rgba(249,123,79,0.15); border-color:rgba(249,123,79,0.4); color:var(--accent2); }
+  .btn.green { background:rgba(99,230,160,0.15); border-color:rgba(99,230,160,0.4); color:var(--accent3); }
+
+  .stat-box { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:.9rem; text-align:center; }
+  .stat-val { font-family:'IBM Plex Mono',monospace; font-size:1.3rem; font-weight:600; color:var(--accent); display:block; }
+  .stat-lbl { font-size:0.68rem; color:var(--text2); text-transform:uppercase; letter-spacing:.05em; margin-top:.2rem; }
+
+  .formula { background:var(--surface2); border-left:3px solid var(--accent); padding:.7rem 1rem; font-family:'IBM Plex Mono',monospace; font-size:0.82rem; color:var(--accent3); border-radius:0 5px 5px 0; margin:.65rem 0; overflow-x:auto; }
+  .formula.orange { border-color:var(--accent2); }
+
+  .theory-block { background:var(--surface2); border-radius:7px; padding:.9rem 1.1rem; font-size:0.86rem; line-height:1.7; color:var(--text2); margin-bottom:.9rem; }
+  .theory-block strong { color:var(--text); }
+  .theory-block .hl { color:var(--accent); font-family:'IBM Plex Mono',monospace; }
+  .theory-block .hl2 { color:var(--accent2); }
+  .theory-block .hl3 { color:var(--accent3); }
+  .theory-block .hl4 { color:var(--accent4); }
+
+  .chart-wrap { position:relative; height:320px; width:100%; }
+
+  .section-hero { margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:1px solid var(--border); }
+  .section-hero h1 { font-family:'Playfair Display',serif; font-size:1.85rem; color:var(--text); margin-bottom:.4rem; }
+  .section-hero p { font-size:0.88rem; color:var(--text2); line-height:1.6; }
+
+  table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+  th { background:var(--surface2); padding:.55rem .85rem; text-align:left; color:var(--text2); font-weight:600; letter-spacing:.03em; font-size:0.7rem; text-transform:uppercase; border-bottom:1px solid var(--border); }
+  td { padding:.5rem .85rem; border-bottom:1px solid var(--border); color:var(--text); font-family:'IBM Plex Mono',monospace; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  td.label { font-family:'IBM Plex Sans',sans-serif; color:var(--text2); font-size:0.8rem; }
+
+  .tab-bar { display:flex; gap:.4rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0; flex-wrap:wrap; }
+  .tab-btn { background:none; border:none; border-bottom:2px solid transparent; padding:.55rem 1rem; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; font-size:0.82rem; color:var(--text2); transition:all .15s; margin-bottom:-1px; }
+  .tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-pane { display:none; } .tab-pane.active { display:block; }
+
+  .quiz-q { font-size:.92rem; font-weight:500; margin-bottom:.9rem; color:var(--text); line-height:1.55; }
+  .quiz-opt { display:block; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:.6rem 1rem; margin-bottom:.45rem; cursor:pointer; font-size:0.83rem; color:var(--text2); transition:all .15s; }
+  .quiz-opt:hover { border-color:var(--accent); color:var(--text); }
+  .quiz-opt.correct { background:rgba(99,230,160,0.15); border-color:var(--accent3); color:var(--accent3); }
+  .quiz-opt.wrong { background:rgba(249,95,95,0.15); border-color:var(--danger); color:var(--danger); }
+  .quiz-feedback { padding:.7rem 1rem; border-radius:6px; font-size:0.83rem; margin-top:.65rem; display:none; line-height:1.5; }
+  .quiz-feedback.show { display:block; }
+  .quiz-feedback.ok { background:rgba(99,230,160,0.1); border:1px solid rgba(99,230,160,0.3); color:var(--accent3); }
+  .quiz-feedback.ko { background:rgba(249,95,95,0.1); border:1px solid rgba(249,95,95,0.3); color:var(--danger); }
+
+  .score-counter { font-family:'IBM Plex Mono',monospace; font-size:0.8rem; color:var(--text2); margin-left:auto; }
+  .note { font-size:0.73rem; color:var(--text3); font-style:italic; margin-top:.45rem; }
+  mark { background:rgba(79,156,249,0.2); color:var(--accent); padding:0 3px; border-radius:2px; }
+  .step { background:var(--surface2); border-radius:7px; padding:.85rem 1.1rem; margin-bottom:.65rem; border-left:3px solid var(--border); }
+  .step.ok { border-color:var(--accent3); }
+  .step-num { font-family:'IBM Plex Mono',monospace; font-size:0.7rem; color:var(--text3); text-transform:uppercase; margin-bottom:.3rem; }
+  select { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:.45rem .7rem; border-radius:5px; font-family:'IBM Plex Mono',monospace; font-size:0.82rem; width:100%; }
+  select:focus { outline:none; border-color:var(--accent); }
+  .highlight-row td { background:rgba(79,156,249,0.07); color:var(--accent); }
+  .pill { display:inline-block; padding:2px 10px; border-radius:20px; font-size:0.72rem; font-family:'IBM Plex Mono',monospace; font-weight:600; }
+  .pill.pos { background:rgba(99,230,160,0.2); color:var(--accent3); }
+  .pill.neg { background:rgba(249,95,95,0.2); color:var(--danger); }
+  .pill.neu { background:rgba(249,228,79,0.2); color:var(--accent4); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Gestion Financière <span>L2 AES — Choix de Financement</span></div>
+  <nav>
+    <button class="nav-btn active" onclick="go('accueil')">🏠 Accueil</button>
+    <button class="nav-btn" onclick="go('capital')">💰 Financement Capital</button>
+    <button class="nav-btn" onclick="go('dette')">🏦 Financement Dette</button>
+    <button class="nav-btn" onclick="go('cout_revient')">📋 Coût de revient</button>
+    <button class="nav-btn" onclick="go('cmpc')">⚖️ CMPC / Coût capital</button>
+    <button class="nav-btn" onclick="go('structure')">🏗️ Structure financière</button>
+    <button class="nav-btn" onclick="go('contraintes')">🔒 Contraintes</button>
+    <button class="nav-btn" onclick="go('exercices')">✏️ Exercices</button>
+    <button class="nav-btn" onclick="go('quiz')">🎯 Quiz</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═══════════════════════════════════════════ ACCUEIL ═══ -->
+<div id="accueil" class="section active">
+  <div class="section-hero">
+    <h1>Choix de Financement</h1>
+    <p>Application interactive — financement par capital, dette, coût de revient, CMPC et structure financière optimale. Prof. C.J. Godlewski.</p>
+  </div>
+  <div class="grid-3">
+    <div class="card" style="cursor:pointer" onclick="go('capital')">
+      <div class="card-title"><span class="badge">01</span> Financement Capital</div>
+      <div class="theory-block">Autofinancement, augmentation de capital, DPS, prime d'émission, quasi-fonds propres (OCA, ORA).</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('dette')">
+      <div class="card-title"><span class="badge">02</span> Financement Dette</div>
+      <div class="theory-block">Emprunt bancaire indivis, emprunt obligataire, crédit-bail. Tableaux d'amortissement interactifs.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('cout_revient')">
+      <div class="card-title"><span class="badge orange">03</span> Coût de revient</div>
+      <div class="theory-block">Taux de revient après IS. Emprunt bancaire, obligataire. Calcul du TRI des flux. Exemples cours.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('cmpc')">
+      <div class="card-title"><span class="badge orange">04</span> CMPC</div>
+      <div class="theory-block">Coût des capitaux propres (Gordon-Shapiro, MEDAF), coût de la dette, CMPC global. Calculateur interactif.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('structure')">
+      <div class="card-title"><span class="badge green">05</span> Structure financière</div>
+      <div class="theory-block">Approche traditionnelle vs Modigliani-Miller (1958 et 1963). Économie d'IS, coûts de faillite, agence.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="go('contraintes')">
+      <div class="card-title"><span class="badge green">06</span> Contraintes</div>
+      <div class="theory-block">Règles d'équilibre financier, ratios autonomie, capacité de remboursement, garanties réelles et personnelles.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Formules clés du chapitre</div>
+    <div class="grid-3">
+      <div class="stat-box"><span class="stat-val" style="font-size:0.9rem">CMPC = kCP·[CP/V] + kD·(1−IS)·[D/V]</span><span class="stat-lbl">Coût moyen pondéré du capital</span></div>
+      <div class="stat-box"><span class="stat-val" style="font-size:0.9rem">kCP = D₁/P₀ + g</span><span class="stat-lbl">Gordon-Shapiro</span></div>
+      <div class="stat-box"><span class="stat-val" style="font-size:0.9rem">V(ED) = V(END) + IS·D</span><span class="stat-lbl">Modigliani-Miller avec IS</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ CAPITAL ═══ -->
+<div id="capital" class="section">
+  <div class="section-hero">
+    <h1>Financement par capital</h1>
+    <p>Fonds propres internes, augmentation de capital, DPS et quasi-fonds propres.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Théorie</span> Sources de financement interne</div>
+      <div class="theory-block">
+        <strong>Autofinancement :</strong> <span class="hl">AF = CAF − Dividendes distribués</span><br>
+        Renforce l'indépendance financière et augmente la capacité d'endettement. Coût implicite = rentabilité exigée par les actionnaires.<br><br>
+        <strong>Cessions d'actifs :</strong> renouvellement normal des immobilisations ou stratégie de recentrage. Génèrent des ressources ponctuelles.
+      </div>
+      <div class="theory-block">
+        <strong>Augmentation de capital :</strong> décidée en Assemblée Générale. Seuls les <span class="hl2">apports en numéraire</span> constituent de nouvelles ressources.<br><br>
+        <strong>Prime d'émission</strong> = Prix d'émission − Valeur nominale<br>
+        Reflète la plus-value accumulée par la société depuis sa création.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Simulateur</span> Augmentation de capital &amp; DPS</div>
+      <div class="control-group">
+        <label>Cours avant opération (€)</label>
+        <div class="range-row"><input type="range" id="coursAv" min="10" max="500" step="5" value="100" oninput="updateDPS()"><span class="range-val" id="coursAvV">100 €</span></div>
+      </div>
+      <div class="control-group">
+        <label>Valeur nominale de l'action (€)</label>
+        <div class="range-row"><input type="range" id="nomVal" min="1" max="50" step="1" value="10" oninput="updateDPS()"><span class="range-val" id="nomValV">10 €</span></div>
+      </div>
+      <div class="control-group">
+        <label>Actions existantes (millions)</label>
+        <div class="range-row"><input type="range" id="ancAct" min="1" max="50" step="1" value="10" oninput="updateDPS()"><span class="range-val" id="ancActV">10 M</span></div>
+      </div>
+      <div class="control-group">
+        <label>Nouvelles actions émises (millions)</label>
+        <div class="range-row"><input type="range" id="newAct" min="1" max="20" step="1" value="4" oninput="updateDPS()"><span class="range-val" id="newActV">4 M</span></div>
+      </div>
+      <div class="control-group">
+        <label>Prix d'émission (€)</label>
+        <div class="range-row"><input type="range" id="prixEm" min="10" max="200" step="5" value="80" oninput="updateDPS()"><span class="range-val" id="prixEmV">80 €</span></div>
+      </div>
+      <div class="grid-3" style="margin-top:.75rem">
+        <div class="stat-box"><span class="stat-val" id="primeEm">70 €</span><span class="stat-lbl">Prime d'émission</span></div>
+        <div class="stat-box"><span class="stat-val" id="coursAp">93.3 €</span><span class="stat-lbl">Cours après op.</span></div>
+        <div class="stat-box"><span class="stat-val" id="valDPS">6.7 €</span><span class="stat-lbl">Valeur DPS</span></div>
+      </div>
+      <p class="note">DPS = Cours avant − Cours après. Un actionnaire non-souscripteur peut céder son DPS pour compenser sa dilution.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge yellow">Quasi-fonds propres</span> Instruments hybrides</div>
+    <div class="grid-3">
+      <div class="stat-box">
+        <div style="font-size:1.6rem;margin-bottom:.5rem">📜</div>
+        <span class="stat-val" style="font-size:.95rem;color:var(--accent4)">ORA</span>
+        <span class="stat-lbl">Obligations Remboursables en Actions — échange automatique à échéance selon parité définie. Augmentation de capital différée.</span>
+      </div>
+      <div class="stat-box">
+        <div style="font-size:1.6rem;margin-bottom:.5rem">🔄</div>
+        <span class="stat-val" style="font-size:.95rem;color:var(--accent2)">OCA</span>
+        <span class="stat-lbl">Obligations Convertibles en Actions — conversion optionnelle à l'échéance. L'investisseur choisit selon le cours de l'action.</span>
+      </div>
+      <div class="stat-box">
+        <div style="font-size:1.6rem;margin-bottom:.5rem">🏦</div>
+        <span class="stat-val" style="font-size:.95rem;color:var(--accent3)">Obligations sub.</span>
+        <span class="stat-lbl">Dernier rang de remboursement. Remboursement au gré de l'émetteur. Proche des fonds propres.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Conséquences de l'augmentation de capital</div>
+    <div class="grid-3">
+      <div class="theory-block" style="margin-bottom:0">✅ <strong>Renforcement des ressources</strong> — finance le développement ou rembourse des dettes.</div>
+      <div class="theory-block" style="margin-bottom:0">⚠️ <strong>Dilution du contrôle</strong> — anciens actionnaires non-souscripteurs voient leur part diminuer.</div>
+      <div class="theory-block" style="margin-bottom:0">📉 <strong>Dilution du BPA</strong> — à court terme, le bénéfice par action baisse si le résultat reste stable.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ DETTE ═══ -->
+<div id="dette" class="section">
+  <div class="section-hero">
+    <h1>Financement par dette</h1>
+    <p>Emprunt bancaire indivis, emprunt obligataire et crédit-bail — tableaux d'amortissement interactifs.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('detteTab','bancaire')">🏦 Emprunt bancaire</button>
+    <button class="tab-btn" onclick="showTab('detteTab','obligataire')">📊 Emprunt obligataire</button>
+    <button class="tab-btn" onclick="showTab('detteTab','leasing')">🚗 Crédit-bail</button>
+  </div>
+
+  <div id="detteTab-bancaire" class="tab-pane active">
+    <div class="card">
+      <div class="card-title"><span class="badge">Théorie</span> Emprunt indivis</div>
+      <div class="theory-block">Emprunt <strong>non fractionnable</strong> contracté auprès d'une banque. L'annuité = intérêts + amortissement du capital.<br>
+      Modalités principales : taux fixe/variable, remboursement anticipé/différé, garanties (caution, nantissement, hypothèque).</div>
+      <div class="formula">Annuité constante : a = C₀ × r / (1 − (1+r)^{−n})</div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="badge orange">Simulateur</span> Tableau d'amortissement</div>
+        <div class="control-group"><label>Capital emprunté (k€)</label>
+          <div class="range-row"><input type="range" id="banC" min="10" max="500" step="10" value="100" oninput="updateBancaire()"><span class="range-val" id="banCV">100 k€</span></div></div>
+        <div class="control-group"><label>Taux nominal (%)</label>
+          <div class="range-row"><input type="range" id="banR" min="1" max="12" step="0.25" value="5" oninput="updateBancaire()"><span class="range-val" id="banRV">5.00%</span></div></div>
+        <div class="control-group"><label>Durée (années)</label>
+          <div class="range-row"><input type="range" id="banN" min="2" max="15" step="1" value="5" oninput="updateBancaire()"><span class="range-val" id="banNV">5 ans</span></div></div>
+        <div class="control-group"><label>Mode de remboursement</label>
+          <select id="banMode" onchange="updateBancaire()">
+            <option value="constant">Annuités constantes</option>
+            <option value="linear">Amortissements constants</option>
+            <option value="infine">In fine</option>
+          </select>
+        </div>
+        <div class="grid-3" style="margin-top:.75rem">
+          <div class="stat-box"><span class="stat-val" id="banTotal">—</span><span class="stat-lbl">Total intérêts</span></div>
+          <div class="stat-box"><span class="stat-val" id="banAnnuite">—</span><span class="stat-lbl">1ère annuité</span></div>
+          <div class="stat-box"><span class="stat-val" id="banCout">—</span><span class="stat-lbl">Coût ap. IS (33%)</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tableau d'amortissement</div>
+        <div style="overflow-x:auto">
+          <table id="tableBancaire">
+            <thead><tr><th>Année</th><th>Capital restant dû</th><th>Intérêts</th><th>Amortissement</th><th>Annuité</th></tr></thead>
+            <tbody id="tbodyBancaire"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Comparaison des modes de remboursement</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="banChart"></canvas></div>
+    </div>
+  </div>
+
+  <div id="detteTab-obligataire" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Théorie</span> Emprunt obligataire</div>
+      <div class="theory-block">Emprunt <strong>divisé en fractions égales</strong> souscrites par un grand nombre de prêteurs. Titres de créance négociables sur le marché secondaire.<br>
+      <span class="hl">TRA</span> = Taux de Rendement Actuariel — taux qui annule la VAN des flux pour l'investisseur.</div>
+      <div class="formula">Prix obligation : P = Σ [C / (1+r)^t] + VR / (1+r)^n &nbsp;|&nbsp; C = coupon = VN × taux nominal</div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="badge orange">Simulateur</span> Obligations</div>
+        <div class="control-group"><label>Valeur nominale (€)</label>
+          <div class="range-row"><input type="range" id="oblVN" min="100" max="2000" step="100" value="1000" oninput="updateOblig()"><span class="range-val" id="oblVNV">1 000 €</span></div></div>
+        <div class="control-group"><label>Taux nominal (%)</label>
+          <div class="range-row"><input type="range" id="oblTN" min="1" max="12" step="0.25" value="6" oninput="updateOblig()"><span class="range-val" id="oblTNV">6.00%</span></div></div>
+        <div class="control-group"><label>Prix d'émission (% du pair)</label>
+          <div class="range-row"><input type="range" id="oblPE" min="90" max="110" step="0.5" value="100" oninput="updateOblig()"><span class="range-val" id="oblPEV">100%</span></div></div>
+        <div class="control-group"><label>Prix de remboursement (% du pair)</label>
+          <div class="range-row"><input type="range" id="oblPR" min="90" max="115" step="0.5" value="100" oninput="updateOblig()"><span class="range-val" id="oblPRV">100%</span></div></div>
+        <div class="control-group"><label>Durée (années)</label>
+          <div class="range-row"><input type="range" id="oblN" min="2" max="15" step="1" value="5" oninput="updateOblig()"><span class="range-val" id="oblNV">5 ans</span></div></div>
+        <div class="control-group"><label>Frais d'émission (% brut)</label>
+          <div class="range-row"><input type="range" id="oblFE" min="0" max="5" step="0.1" value="1.5" oninput="updateOblig()"><span class="range-val" id="oblFEV">1.5%</span></div></div>
+        <div class="grid-2" style="margin-top:.75rem">
+          <div class="stat-box"><span class="stat-val" id="oblCoupon">60 €</span><span class="stat-lbl">Coupon annuel</span></div>
+          <div class="stat-box"><span class="stat-val" id="oblTRA">—</span><span class="stat-lbl">TRA investisseur</span></div>
+          <div class="stat-box"><span class="stat-val" id="oblCout">—</span><span class="stat-lbl">Coût revient émetteur ap. IS</span></div>
+          <div class="stat-box"><span class="stat-val" id="oblActuNet">—</span><span class="stat-lbl">Produit net émission</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sensibilité du prix à la variation de taux</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="oblChart"></canvas></div>
+        <p class="note">La courbe montre la relation inverse et convexe entre prix et taux — fondamentale pour la gestion obligataire.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="detteTab-leasing" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Crédit-bail</span> Location-financement</div>
+      <div class="theory-block">
+        Contrat de location avec option d'achat à prix fixé à l'avance. Le bien reste la propriété du bailleur jusqu'à la levée de l'option.<br><br>
+        <strong>Fin de contrat :</strong> lever l'option (devenir propriétaire), reconduire le contrat, ou restituer le bien.<br><br>
+        <span class="hl2">Engagement hors-bilan</span> — n'apparaît pas au bilan de l'utilisateur (avant IFRS 16). Les loyers sont déductibles fiscalement.
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="stat-box">
+        <div style="font-size:1.5rem;margin-bottom:.5rem">🚗</div>
+        <span class="stat-val" style="font-size:.9rem;color:var(--accent)">Mobilier</span>
+        <span class="stat-lbl">Véhicules, équipements industriels, bureautiques, médicaux, agricoles — matériel identifiable, amortissable</span>
+      </div>
+      <div class="stat-box">
+        <div style="font-size:1.5rem;margin-bottom:.5rem">🏢</div>
+        <span class="stat-val" style="font-size:.9rem;color:var(--accent2)">Immobilier</span>
+        <span class="stat-lbl">Locaux industriels, commerciaux, professionnels. Durée plus longue (15–25 ans)</span>
+      </div>
+      <div class="stat-box">
+        <div style="font-size:1.5rem;margin-bottom:.5rem">🔄</div>
+        <span class="stat-val" style="font-size:.9rem;color:var(--accent3)">Cession-bail</span>
+        <span class="stat-lbl">Lease-back : vente d'un bien à une société de crédit-bail puis location en retour. Libère des liquidités.</span>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1.5rem">
+      <div class="card-title">Avantages vs Inconvénients</div>
+      <div class="grid-2">
+        <div>
+          <div class="theory-block">✅ <strong>Financement à 100%</strong> de l'investissement (sans apport)<br>✅ <strong>Souplesse</strong> des modalités de paiement<br>✅ <strong>Protection</strong> contre l'obsolescence technologique<br>✅ <strong>Déductibilité fiscale</strong> des loyers</div>
+        </div>
+        <div>
+          <div class="theory-block">❌ <strong>Coût élevé</strong> par rapport à l'emprunt bancaire<br>❌ <strong>Risque</strong> d'utilisation dans des opérations peu rentables<br>❌ Loyers fixes indépendamment du succès du projet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ COÛT REVIENT ═══ -->
+<div id="cout_revient" class="section">
+  <div class="section-hero">
+    <h1>Coût de revient d'un financement</h1>
+    <p>Le taux de revient est le TRI des flux nets générés par le financement, après prise en compte de la fiscalité.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge">Principe</span> Calcul du taux de revient</div>
+    <div class="theory-block">
+      Le coût de revient = <span class="hl">TRI des flux nets après IS</span>. On calcule les flux du point de vue de l'emprunteur :<br><br>
+      <strong>t=0 :</strong> +Capital reçu − Frais de dossier payés + Économie IS sur frais<br>
+      <strong>t=1..n :</strong> −Intérêts + Économie IS sur intérêts − Amortissement capital<br><br>
+      Sans frais : <span class="hl">coût revient = taux nominal × (1 − IS)</span>
+    </div>
+    <div class="formula">Taux ap. IS (sans frais) = taux × (1 − taux IS) &nbsp;|&nbsp; Ex. : 4.5% × (1 − 33.33%) = 3.0%</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('crtab','bancEx')">Ex. Emprunt bancaire (cours)</button>
+    <button class="tab-btn" onclick="showTab('crtab','obligEx')">Ex. Emprunt obligataire (cours)</button>
+    <button class="tab-btn" onclick="showTab('crtab','crCalc')">Calculateur libre</button>
+  </div>
+
+  <!-- Ex cours emprunt bancaire -->
+  <div id="crtab-bancEx" class="tab-pane active">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Exemple cours</span> Emprunt bancaire in fine avec frais</div>
+      <div class="theory-block">Emprunt de <strong>20 k€</strong> sur <strong>4 ans</strong> au taux <strong>4.5%</strong> (dont 0.5% assurance), remboursable <strong>in fine</strong>. Frais de dossier : <strong>600 €</strong>. Taux IS = 33.33%.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Tableau des flux</span></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Flux</th><th>N (t=0)</th><th>N+1</th><th>N+2</th><th>N+3</th><th>N+4</th></tr></thead>
+          <tbody id="exBancTbody"></tbody>
+          <tfoot><tr id="exBancTotal" style="font-weight:600;border-top:2px solid var(--border)"></tr></tfoot>
+        </table>
+      </div>
+      <div class="grid-3" style="margin-top:1rem">
+        <div class="stat-box"><span class="stat-val" id="exBancTRI">—</span><span class="stat-lbl">TRI = Coût de revient</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">3.0%</span><span class="stat-lbl">Taux ap. IS (sans frais)</span></div>
+        <div class="stat-box"><span class="stat-val" id="exBancDiff">—</span><span class="stat-lbl">Impact des frais</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ex cours emprunt obligataire -->
+  <div id="crtab-obligEx" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Exemple cours</span> Emprunt obligataire avec frais d'émission</div>
+      <div class="theory-block">Emprunt obligataire de <strong>20 M€</strong> sur <strong>4 ans</strong> au taux <strong>6%</strong>, émis et remboursable <strong>au pair et in fine</strong>. Frais d'émission = <strong>1.5%</strong> du produit brut. Taux IS = 33.33%.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Tableau des flux</span></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Flux</th><th>N (t=0)</th><th>N+1</th><th>N+2</th><th>N+3</th><th>N+4</th></tr></thead>
+          <tbody id="exObligTbody"></tbody>
+          <tfoot><tr id="exObligTotal" style="font-weight:600;border-top:2px solid var(--border)"></tr></tfoot>
+        </table>
+      </div>
+      <div class="grid-3" style="margin-top:1rem">
+        <div class="stat-box"><span class="stat-val" id="exObligTRI">—</span><span class="stat-lbl">TRI = Coût de revient</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">4.0%</span><span class="stat-lbl">Taux ap. IS (sans frais)</span></div>
+        <div class="stat-box"><span class="stat-val" id="exObligDiff">—</span><span class="stat-lbl">Impact des frais</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculateur libre -->
+  <div id="crtab-crCalc" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur</span> Coût de revient personnalisé</div>
+      <div class="grid-2">
+        <div>
+          <div class="control-group"><label>Montant emprunt (k€)</label><input type="number" id="crMt" value="3000" oninput="updateCRCalc()"></div>
+          <div class="control-group"><label>Taux nominal (%)</label><input type="number" id="crTaux" value="10" step="0.1" oninput="updateCRCalc()"></div>
+          <div class="control-group"><label>Durée (années)</label><input type="number" id="crDuree" value="5" min="1" max="20" oninput="updateCRCalc()"></div>
+          <div class="control-group"><label>Mode remboursement</label>
+            <select id="crMode" onchange="updateCRCalc()">
+              <option value="infine">In fine</option>
+              <option value="constant">Annuités constantes</option>
+              <option value="linear">Amortissements constants</option>
+            </select>
+          </div>
+          <div class="control-group"><label>Frais dossier (€ ou en % si &lt;1)</label><input type="number" id="crFrais" value="30" step="0.1" oninput="updateCRCalc()"></div>
+          <div class="control-group"><label>Prime remboursement (€/obligation, ou 0)</label><input type="number" id="crPrime" value="0" step="1" oninput="updateCRCalc()"></div>
+          <div class="control-group"><label>Taux IS (%)</label><input type="number" id="crIS" value="33.33" step="0.01" oninput="updateCRCalc()"></div>
+        </div>
+        <div>
+          <div class="stat-box" style="margin-bottom:1rem"><span class="stat-val" id="crTRI">—</span><span class="stat-lbl">Coût de revient (TRI ap. IS)</span></div>
+          <div style="overflow-x:auto;max-height:340px;overflow-y:auto">
+            <table id="crTable">
+              <thead><tr><th>Période</th><th>Capital restant</th><th>Intérêts</th><th>Éco IS int.</th><th>Amort.</th><th>Frais</th><th>Flux net</th></tr></thead>
+              <tbody id="crTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ CMPC ═══ -->
+<div id="cmpc" class="section">
+  <div class="section-hero">
+    <h1>Coût du capital — CMPC</h1>
+    <p>Le coût moyen pondéré du capital (CMPC) est le taux minimum de rentabilité exigé par les apporteurs de fonds.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge">Formule</span> CMPC</div>
+    <div class="formula" style="font-size:1rem;padding:.9rem 1.2rem">CMPC = k<sub>CP</sub> × [CP / (CP + D)] + k<sub>D</sub> × (1 − IS) × [D / (CP + D)]</div>
+    <div class="grid-3">
+      <div class="theory-block" style="margin-bottom:0"><span class="hl">k<sub>CP</sub></span> = coût des CP — rentabilité exigée par les actionnaires (MEDAF ou Gordon-Shapiro)</div>
+      <div class="theory-block" style="margin-bottom:0"><span class="hl">k<sub>D</sub></span> = coût de la dette — taux du marché actuel (pas le taux contractuel historique)</div>
+      <div class="theory-block" style="margin-bottom:0"><span class="hl">(1−IS)</span> = bouclier fiscal — les intérêts sont déductibles de l'IS</div>
+    </div>
+    <p class="note" style="margin-top:.8rem">Ce CMPC reste un résultat de chapitre 3 : il servira ensuite, dans le chapitre 4, comme taux d'actualisation des FNT lorsque le projet a un risque comparable à celui de l'entreprise.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('cmpcTab','gordon')">Gordon-Shapiro</button>
+    <button class="tab-btn" onclick="showTab('cmpcTab','medafCMPC')">MEDAF</button>
+    <button class="tab-btn" onclick="showTab('cmpcTab','cmpcCalc')">Calculateur CMPC</button>
+    <button class="tab-btn" onclick="showTab('cmpcTab','exCMPC1')">Ex.1 — Simple</button>
+    <button class="tab-btn" onclick="showTab('cmpcTab','exCMPC2')">Ex.2 — MEDAF</button>
+    <button class="tab-btn" onclick="showTab('cmpcTab','exCMPC3')">Ex.3 — Complet</button>
+  </div>
+
+  <!-- Gordon-Shapiro -->
+  <div id="cmpcTab-gordon" class="tab-pane active">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="badge">Modèle</span> Gordon-Shapiro</div>
+        <div class="theory-block">Le modèle de Gordon-Shapiro suppose une croissance perpétuelle et constante des dividendes :<br><br>
+        <span class="hl">P₀ = D₁ / (k − g)</span> &nbsp;⟹&nbsp; <span class="hl">k = D₁/P₀ + g</span><br><br>
+        <strong>P₀</strong> = cours actuel de l'action<br>
+        <strong>D₁</strong> = prochain dividende attendu<br>
+        <strong>g</strong> = taux de croissance perpétuel des dividendes<br>
+        <strong>k</strong> = rentabilité exigée (coût des CP)</div>
+        <div class="formula orange">k<sub>CP</sub> = D₁ / P₀ + g</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge orange">Simulateur</span> Gordon-Shapiro</div>
+        <div class="control-group"><label>Cours actuel P₀ (€)</label>
+          <div class="range-row"><input type="range" id="gsP0" min="10" max="1000" step="5" value="100" oninput="updateGS()"><span class="range-val" id="gsP0V">100 €</span></div></div>
+        <div class="control-group"><label>Prochain dividende D₁ (€)</label>
+          <div class="range-row"><input type="range" id="gsD1" min="0.5" max="50" step="0.5" value="8" oninput="updateGS()"><span class="range-val" id="gsD1V">8 €</span></div></div>
+        <div class="control-group"><label>Taux de croissance g (%)</label>
+          <div class="range-row"><input type="range" id="gsG" min="0" max="10" step="0.25" value="3" oninput="updateGS()"><span class="range-val" id="gsGV">3.0%</span></div></div>
+        <div class="stat-box" style="margin-top:1rem"><span class="stat-val" id="gsK">11.0%</span><span class="stat-lbl">k<sub>CP</sub> = Coût des capitaux propres</span></div>
+        <div class="chart-wrap" style="height:220px;margin-top:1rem"><canvas id="gsChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEDAF pour kCP -->
+  <div id="cmpcTab-medafCMPC" class="tab-pane">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="badge">Coût CP via MEDAF</span></div>
+        <div class="theory-block">Le MEDAF permet d'estimer k<sub>CP</sub> directement :<br><br>
+        <span class="hl">k<sub>CP</sub> = Rf + β × [E(Rm) − Rf]</span><br><br>
+        Cette approche est préférable quand l'action est cotée et que la politique de dividendes est instable ou incertaine.</div>
+        <div class="formula orange">k<sub>CP</sub> = Rf + β × Prime de risque marché</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge orange">Simulateur MEDAF → k<sub>CP</sub></span></div>
+        <div class="control-group"><label>Rf (%)</label>
+          <div class="range-row"><input type="range" id="mRf" min="0" max="6" step="0.1" value="3" oninput="updateMedafKCP()"><span class="range-val" id="mRfV">3.0%</span></div></div>
+        <div class="control-group"><label>E(Rm) (%)</label>
+          <div class="range-row"><input type="range" id="mEm" min="5" max="18" step="0.5" value="9" oninput="updateMedafKCP()"><span class="range-val" id="mEmV">9.0%</span></div></div>
+        <div class="control-group"><label>Bêta de l'action</label>
+          <div class="range-row"><input type="range" id="mBeta" min="0" max="2.5" step="0.05" value="1.3" oninput="updateMedafKCP()"><span class="range-val" id="mBetaV">1.30</span></div></div>
+        <div class="stat-box" style="margin-top:1rem"><span class="stat-val" id="mKCP">10.8%</span><span class="stat-lbl">k<sub>CP</sub> via MEDAF</span></div>
+        <p class="note" style="margin-top:.75rem">Ex. cours : k<sub>CP</sub> = 3% + (10.2%−3%) × 1.3 = <mark>11.64%</mark></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculateur CMPC -->
+  <div id="cmpcTab-cmpcCalc" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur CMPC complet</span></div>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--accent);font-size:.78rem;font-weight:600;text-transform:uppercase;margin-bottom:.75rem">Capitaux propres</p>
+          <div class="control-group"><label>Valeur de marché CP (M€)</label><input type="number" id="calcCP" value="12" step="0.5" oninput="updateCMPC()"></div>
+          <div class="control-group"><label>k<sub>CP</sub> — méthode</label>
+            <select id="calcKCPMethod" onchange="toggleKCPMethod()">
+              <option value="direct">Saisie directe</option>
+              <option value="gs">Gordon-Shapiro</option>
+              <option value="medaf">MEDAF</option>
+            </select>
+          </div>
+          <div id="calcKCPDirect">
+            <div class="control-group"><label>k<sub>CP</sub> (%)</label><input type="number" id="calcKCP" value="11.64" step="0.1" oninput="updateCMPC()"></div>
+          </div>
+          <div id="calcKCPGS" style="display:none">
+            <div class="control-group"><label>P₀ (€)</label><input type="number" id="calcP0" value="100" oninput="updateCMPC()"></div>
+            <div class="control-group"><label>D₁ (€)</label><input type="number" id="calcD1" value="8" oninput="updateCMPC()"></div>
+            <div class="control-group"><label>g (%)</label><input type="number" id="calcG" value="3" step="0.1" oninput="updateCMPC()"></div>
+          </div>
+          <div id="calcKCPMedaf" style="display:none">
+            <div class="control-group"><label>Rf (%)</label><input type="number" id="calcRf2" value="3" step="0.1" oninput="updateCMPC()"></div>
+            <div class="control-group"><label>E(Rm) (%)</label><input type="number" id="calcEm2" value="9" step="0.1" oninput="updateCMPC()"></div>
+            <div class="control-group"><label>Bêta</label><input type="number" id="calcBeta2" value="1.3" step="0.05" oninput="updateCMPC()"></div>
+          </div>
+        </div>
+        <div>
+          <p style="color:var(--accent2);font-size:.78rem;font-weight:600;text-transform:uppercase;margin-bottom:.75rem">Dettes financières</p>
+          <div class="control-group"><label>Valeur de marché Dettes (M€)</label><input type="number" id="calcD" value="9" step="0.5" oninput="updateCMPC()"></div>
+          <div class="control-group"><label>Coût de la dette k<sub>D</sub> (%)</label><input type="number" id="calcKD" value="5.56" step="0.1" oninput="updateCMPC()"></div>
+          <div class="control-group"><label>Taux IS (%)</label><input type="number" id="calcIS" value="33.33" step="0.01" oninput="updateCMPC()"></div>
+        </div>
+      </div>
+      <div class="grid-4" style="margin-top:1.25rem">
+        <div class="stat-box"><span class="stat-val" id="cmpcKCP">—</span><span class="stat-lbl">k<sub>CP</sub></span></div>
+        <div class="stat-box"><span class="stat-val" id="cmpcKDIS">—</span><span class="stat-lbl">k<sub>D</sub> ap. IS</span></div>
+        <div class="stat-box"><span class="stat-val" id="cmpcPdsCP">—</span><span class="stat-lbl">Poids CP</span></div>
+        <div class="stat-box"><span class="stat-val" id="cmpcResult" style="font-size:1.5rem;color:var(--accent3)">—</span><span class="stat-lbl">CMPC</span></div>
+      </div>
+      <div class="chart-wrap" style="height:240px;margin-top:1.25rem"><canvas id="cmpcChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Exemple 1 -->
+  <div id="cmpcTab-exCMPC1" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Exemple 1</span> CMPC simple (sans MEDAF)</div>
+      <div class="theory-block">Investissement de <strong>200 k€</strong>. CP = 50 k€ (k<sub>CP</sub> = 14%), emprunt = 150 k€ à 8%. IS = 33.33%.</div>
+      <div class="step ok">
+        <div class="step-num">Étape 1 — Poids de chaque source</div>
+        CP : 50/200 = 25% &nbsp;|&nbsp; Dette : 150/200 = 75%
+      </div>
+      <div class="step ok">
+        <div class="step-num">Étape 2 — Coût après IS</div>
+        k<sub>D</sub> après IS = 8% × (1 − 1/3) = <mark>5.33%</mark>
+      </div>
+      <div class="step ok">
+        <div class="step-num">Étape 3 — CMPC</div>
+        CMPC = 14% × 25% + 5.33% × 75% = 3.5% + 4.0% = <mark>7.5%</mark>
+      </div>
+      <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">7.5%</span><span class="stat-lbl">CMPC</span></div>
+    </div>
+  </div>
+
+  <!-- Exemple 2 -->
+  <div id="cmpcTab-exCMPC2" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Exemple 2</span> CMPC avec MEDAF (exercice FLR)</div>
+      <div class="theory-block">
+        CP = 12 M€, D = 9 M€. Rf = 3%, E(Rm) = 10.2%, β = 1.3. Intérêts = 500 k€. IS = 33.33%.
+      </div>
+      <div class="step ok"><div class="step-num">k<sub>CP</sub> via MEDAF</div>k<sub>CP</sub> = 3% + (10.2% − 3%) × 1.3 = <mark>11.64%</mark></div>
+      <div class="step ok"><div class="step-num">k<sub>D</sub></div>k<sub>D</sub> brut = 500/9000 = 5.56% &nbsp;|&nbsp; k<sub>D</sub> ap. IS = 5.56% × 2/3 = <mark>3.70%</mark></div>
+      <div class="step ok"><div class="step-num">CMPC</div>
+        CMPC = 11.64% × (12/21) + 3.70% × (9/21) = 6.65% + 1.59% = <mark>8.24%</mark>
+      </div>
+      <p class="note">⚠️ Le taux k<sub>D</sub> doit être le <strong>taux de marché actuel</strong>, pas le taux contractuel historique.</p>
+    </div>
+  </div>
+
+  <!-- Exemple 3 — complet société labo -->
+  <div id="cmpcTab-exCMPC3" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Exemple 3</span> Société laboratoire — CMPC complet</div>
+      <div class="theory-block">Société envisage 330 k€ d'investissement financé par emprunt à 5%. Capital : 312 500 actions à 8 €. D₁ = 0.8 €, g = 3%. Deux emprunts existants. IS = 33.33%.</div>
+      <div class="step ok"><div class="step-num">k<sub>CP</sub> Gordon-Shapiro</div>k<sub>CP</sub> = 0.8/8 + 3% = <mark>13%</mark></div>
+      <div class="step ok"><div class="step-num">Coûts des dettes (taux de marché)</div>
+        Obligataire : taux marché 5% → 5% × (2/3) = <mark>3.33%</mark><br>
+        Court terme : 20/200 × (2/3) = <mark>6.67%</mark> (taux comptable ≈ marché)<br>
+        Nouvel emprunt 5% → <mark>3.33%</mark>
+      </div>
+      <div class="step ok"><div class="step-num">Valeurs de marché (après investissement)</div>
+        CP = 312 500 × 8 = <mark>2 500 k€</mark> &nbsp;|&nbsp; Dettes = 1 100 + 200 + 330 = <mark>1 630 k€</mark>
+      </div>
+      <div class="step ok"><div class="step-num">CMPC</div>
+        13% × (2500/4130) + 6.67% × (200/4130) + 3.33% × (1430/4130) = <mark>9.3%</mark>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ STRUCTURE ═══ -->
+<div id="structure" class="section">
+  <div class="section-hero">
+    <h1>Structure financière optimale</h1>
+    <p>Approche traditionnelle, Modigliani-Miller, coûts de faillite et théorie de l'agence.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('strTab','traditionnelle')">Approche traditionnelle</button>
+    <button class="tab-btn" onclick="showTab('strTab','mm58')">M&M sans IS (1958)</button>
+    <button class="tab-btn" onclick="showTab('strTab','mm63')">M&M avec IS (1963)</button>
+    <button class="tab-btn" onclick="showTab('strTab','limites')">Limites &amp; agence</button>
+    <button class="tab-btn" onclick="showTab('strTab','simSF')">Simulateur</button>
+  </div>
+
+  <div id="strTab-traditionnelle" class="tab-pane active">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="badge">Approche traditionnelle</span></div>
+        <div class="theory-block">
+          <strong>Existe-t-il une structure financière optimale ?</strong><br><br>
+          L'approche traditionnelle répond <span class="hl3">OUI</span> : il existe un niveau d'endettement qui minimise le CMPC et donc maximise la valeur de l'entreprise.<br><br>
+          <strong>Raisonnement :</strong><br>
+          • k<sub>D</sub> &lt; k<sub>CP</sub> (actionnaires plus risqués que créanciers)<br>
+          • Intérêts déductibles → bouclier fiscal<br>
+          → Recours à la dette fait <span class="hl2">baisser</span> le CMPC au départ<br><br>
+          <strong>Mais</strong> si endettement excessif :<br>
+          • Actionnaires exigent un k<sub>CP</sub> plus élevé (risque financier)<br>
+          • Créanciers exigent aussi un k<sub>D</sub> plus élevé<br>
+          → Relation <span class="hl">non linéaire</span> → existence d'un minimum du CMPC
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Courbe du CMPC selon l'approche traditionnelle</div>
+        <div class="chart-wrap"><canvas id="tradChart"></canvas></div>
+        <p class="note">Il existe un niveau d'endettement optimal D/CP* qui minimise le CMPC. En-deçà, l'effet bouclier fiscal domine. Au-delà, le risque financier prend le dessus.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="strTab-mm58" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge yellow">Modigliani-Miller 1958</span> Marchés parfaits — sans IS</div>
+      <div class="grid-2">
+        <div class="theory-block">
+          <strong>Hypothèse :</strong> marchés financiers parfaits (sans frictions, sans IS, sans coûts de transaction).<br><br>
+          <strong>Proposition I :</strong> <span class="hl">La valeur de l'entreprise est indépendante de sa structure financière.</span><br>
+          V(endettée) = V(non endettée)<br><br>
+          <strong>Mécanisme d'arbitrage :</strong> si une firme endettée valait plus, des investisseurs arbitreraient en vendant ses actions pour acheter celles de la firme non endettée + s'endetter eux-mêmes (endettement personnel). L'arbitrage ramènerait les deux valeurs à l'égalité.<br><br>
+          <strong>Analogie de Miller :</strong> <em>« La taille d'une pizza ne dépend pas de la façon dont on la coupe. »</em>
+        </div>
+        <div>
+          <div class="stat-box" style="margin-bottom:1rem">
+            <span class="stat-val" style="font-size:1rem">CMPC = k<sub>éco</sub></span>
+            <span class="stat-lbl">Coût du capital = taux de rentabilité économique, indépendant de la structure financière</span>
+          </div>
+          <div class="theory-block">
+            Conséquence : tout gain d'endettement (moins cher) est exactement compensé par la hausse du k<sub>CP</sub> exigé (risque financier plus élevé).<br><br>
+            <span class="hl">CMPC reste constant</span> quelle que soit la structure financière.
+          </div>
+          <div class="theory-block" style="margin-top:1rem">
+            <strong>Mini-cas chiffré :</strong><br>
+            Firme ND : 100% capitaux propres, résultat économique = 100.<br>
+            Firme D : dette 500 à 5% + capitaux propres 500.<br><br>
+            Acheter 10% de D coûte <span class="hl">50</span> et donne 10% × (100 − 25) = <span class="hl">7,5</span>.<br>
+            Acheter 10% de ND coûte <span class="hl">100</span>, mais l'investisseur peut emprunter lui-même 50 à 5% : coût net <span class="hl">50</span>, revenu net 10 − 2,5 = <span class="hl">7,5</span>.<br><br>
+            <strong>Même mise nette, même flux :</strong> si les prix différaient, un arbitrage serait possible.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="strTab-mm63" class="tab-pane">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="badge yellow">Modigliani-Miller 1963</span> Avec impôt sur les sociétés</div>
+        <div class="theory-block">
+          En introduisant l'IS, les intérêts de la dette sont déductibles → économie d'IS.<br><br>
+          <strong>Proposition I (avec IS) :</strong><br>
+          <span class="hl">V(ED) = V(END) + IS × D</span><br><br>
+          Si la dette est utilisée en permanence, l'économie IS doit être capitalisée dans la valeur de l'entreprise.<br><br>
+          <strong>Conséquence :</strong> pour maximiser la valeur de l'entreprise, il faudrait s'endetter au maximum ! (100% de dette)<br><br>
+          Mais cette conclusion <span class="hl2">extrême</span> suppose l'absence de coûts de faillite…
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge orange">Simulateur</span> M&M avec IS</div>
+        <div class="control-group"><label>Valeur entreprise sans dette V(END) (M€)</label>
+          <div class="range-row"><input type="range" id="mmV0" min="50" max="500" step="10" value="200" oninput="updateMM()"><span class="range-val" id="mmV0V">200 M€</span></div></div>
+        <div class="control-group"><label>Montant de la dette D (M€)</label>
+          <div class="range-row"><input type="range" id="mmD" min="0" max="200" step="5" value="80" oninput="updateMM()"><span class="range-val" id="mmDV">80 M€</span></div></div>
+        <div class="control-group"><label>Taux IS (%)</label>
+          <div class="range-row"><input type="range" id="mmIS" min="10" max="40" step="1" value="33" oninput="updateMM()"><span class="range-val" id="mmISV">33%</span></div></div>
+        <div class="grid-3" style="margin-top:.75rem">
+          <div class="stat-box"><span class="stat-val" id="mmVEND">200 M€</span><span class="stat-lbl">V(sans dette)</span></div>
+          <div class="stat-box"><span class="stat-val" id="mmEcoIS">26.4 M€</span><span class="stat-lbl">Éco. IS (IS×D)</span></div>
+          <div class="stat-box"><span class="stat-val" id="mmVED" style="color:var(--accent3)">226.4 M€</span><span class="stat-lbl">V(endettée)</span></div>
+        </div>
+        <div class="chart-wrap" style="height:220px;margin-top:1rem"><canvas id="mmChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="strTab-limites" class="tab-pane">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="badge danger" style="background:rgba(249,95,95,0.15);color:var(--danger);border-color:rgba(249,95,95,0.3)">Coûts de faillite</span></div>
+        <div class="theory-block">
+          L'endettement excessif augmente la probabilité de défaillance :<br><br>
+          <strong>Coûts directs :</strong> frais de liquidation, perte de valeur lors de la cession forcée des actifs.<br><br>
+          <strong>Coûts indirects :</strong> perte de confiance des clients/fournisseurs, départ de collaborateurs-clés, opportunités d'investissement manquées.<br><br>
+          Ces coûts sont généralement <span class="hl2">supérieurs à l'avantage fiscal</span> de l'endettement → <em>trade-off theory</em>.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge danger" style="background:rgba(249,95,95,0.15);color:var(--danger);border-color:rgba(249,95,95,0.3)">Coûts d'agence &amp; asymétrie</span></div>
+        <div class="theory-block">
+          <strong>Théorie de l'agence :</strong> conflits entre dirigeants, actionnaires et créanciers → coûts (surveillance, garanties, perte d'efficacité).<br><br>
+          La <span class="hl">dette discipline les dirigeants</span> (Jensen, 1986) : le service de la dette contraint à générer des cash-flows suffisants.<br><br>
+          <strong>Asymétrie d'information :</strong> les dirigeants (mieux informés) signalent la qualité de la firme via le niveau d'endettement. <span class="hl2">Pecking order theory</span> : préférence pour l'autofinancement > dette > actions.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Synthèse — Structure optimale (Trade-off Theory)</div>
+      <div class="chart-wrap"><canvas id="tradeoffChart"></canvas></div>
+      <p class="note">La valeur de l'entreprise est maximisée au point où la valeur marginale du bouclier fiscal = coût marginal de faillite.</p>
+    </div>
+  </div>
+
+  <div id="strTab-simSF" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Simulateur structure financière</span> Impact sur CMPC et valeur</div>
+      <div class="control-group"><label>Valeur économique de l'entreprise V₀ (M€)</label>
+        <div class="range-row"><input type="range" id="sfV0" min="50" max="500" step="10" value="200" oninput="updateSF()"><span class="range-val" id="sfV0V">200 M€</span></div></div>
+      <div class="control-group"><label>Levier D/(D+CP) (%)</label>
+        <div class="range-row"><input type="range" id="sfLevier" min="0" max="90" step="5" value="30" oninput="updateSF()"><span class="range-val" id="sfLevierV">30%</span></div></div>
+      <div class="control-group"><label>k<sub>D</sub> sans risque (%)</label>
+        <div class="range-row"><input type="range" id="sfKD0" min="2" max="8" step="0.25" value="4" oninput="updateSF()"><span class="range-val" id="sfKD0V">4.0%</span></div></div>
+      <div class="control-group"><label>k<sub>CP</sub> de base (levier=0) (%)</label>
+        <div class="range-row"><input type="range" id="sfKCP0" min="6" max="16" step="0.5" value="10" oninput="updateSF()"><span class="range-val" id="sfKCP0V">10.0%</span></div></div>
+      <div class="control-group"><label>Taux IS (%)</label>
+        <div class="range-row"><input type="range" id="sfIS2" min="10" max="40" step="1" value="33" oninput="updateSF()"><span class="range-val" id="sfIS2V">33%</span></div></div>
+      <div class="grid-4" style="margin-top:1rem">
+        <div class="stat-box"><span class="stat-val" id="sfKCPres">—</span><span class="stat-lbl">k<sub>CP</sub> effectif</span></div>
+        <div class="stat-box"><span class="stat-val" id="sfKDres">—</span><span class="stat-lbl">k<sub>D</sub> ap. IS</span></div>
+        <div class="stat-box"><span class="stat-val" id="sfCMPC">—</span><span class="stat-lbl">CMPC</span></div>
+        <div class="stat-box"><span class="stat-val" id="sfValeur" style="color:var(--accent3)">—</span><span class="stat-lbl">Valeur entreprise</span></div>
+      </div>
+      <div class="chart-wrap" style="height:280px;margin-top:1.25rem"><canvas id="sfChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ CONTRAINTES ═══ -->
+<div id="contraintes" class="section">
+  <div class="section-hero">
+    <h1>Contraintes de financement</h1>
+    <p>Règles financières prudentielles, ratios clés et types de garanties.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Ratios clés</span> Règles prudentielles</div>
+      <table>
+        <thead><tr><th>Ratio</th><th>Formule</th><th>Seuil</th><th>Signification</th></tr></thead>
+        <tbody>
+          <tr><td class="label">Autonomie financière</td><td>CP / DF</td><td style="color:var(--accent3)">&gt; 1</td><td class="label">Les CP doivent dépasser les dettes</td></tr>
+          <tr><td class="label">Levier</td><td>DF / CP</td><td style="color:var(--accent3)">&lt; 1</td><td class="label">Les dettes ne dépassent pas les CP</td></tr>
+          <tr><td class="label">Indépendance</td><td>CP / (CP+DF)</td><td style="color:var(--accent3)">&gt; 50%</td><td class="label">CP &gt; 50% des ressources durables</td></tr>
+          <tr><td class="label">Capacité remb.</td><td>DF / CAF</td><td style="color:var(--accent4)">&lt; 3–4</td><td class="label">Remboursement en moins de 4 ans de CAF</td></tr>
+          <tr><td class="label">Endettement net</td><td>DF nette / EBE</td><td style="color:var(--accent4)">&lt; 4</td><td class="label">Ratio surveillé par les banques</td></tr>
+          <tr><td class="label">Couverture intérêts</td><td>REX / Frais fin.</td><td style="color:var(--accent2)">&gt; 3</td><td class="label">Le résultat d'exploitation couvre bien les intérêts</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur</span> Ratios de contrainte</div>
+      <div class="grid-2">
+        <div class="control-group"><label>Capitaux propres (M€)</label><input type="number" id="conCP" value="12" oninput="updateContraintes()"></div>
+        <div class="control-group"><label>Dettes financières (M€)</label><input type="number" id="conDF" value="9" oninput="updateContraintes()"></div>
+        <div class="control-group"><label>CAF annuelle (M€)</label><input type="number" id="conCAF" value="4" oninput="updateContraintes()"></div>
+        <div class="control-group"><label>EBE (M€)</label><input type="number" id="conEBE" value="5" oninput="updateContraintes()"></div>
+        <div class="control-group"><label>REX (M€)</label><input type="number" id="conREX" value="3" oninput="updateContraintes()"></div>
+        <div class="control-group"><label>Frais financiers (M€)</label><input type="number" id="conFF" value="0.5" oninput="updateContraintes()"></div>
+      </div>
+      <table style="margin-top:.75rem">
+        <thead><tr><th>Ratio</th><th>Valeur</th><th>Seuil</th><th>Statut</th></tr></thead>
+        <tbody id="conTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Types de garanties</div>
+    <div class="grid-2">
+      <div>
+        <div class="theory-block"><strong>Garanties personnelles</strong><br>
+        <span class="hl">Cautionnement</span> : une personne physique ou morale s'engage à rembourser en cas de défaillance de l'emprunteur. Engagement hors-bilan. Possible via organisme de cautionnement mutuel.
+        </div>
+      </div>
+      <div>
+        <div class="theory-block"><strong>Garanties réelles</strong><br>
+        <span class="hl">Nantissement</span> : droit sur un bien mobilier (véhicule, fonds de commerce, matériel, titres). L'emprunteur conserve l'usage mais ne peut pas vendre sans accord.<br><br>
+        <span class="hl">Hypothèque</span> : porte sur un bien immobilier. Doit être enregistrée chez le notaire → frais importants qui majorent le coût du financement.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ EXERCICES ═══ -->
+<div id="exercices" class="section">
+  <div class="section-hero">
+    <h1>Exercices guidés</h1>
+    <p>Exercices tirés du TD et du fichier d'exercices — solutions détaillées.</p>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('exTab','ex7')">Ex.7 — Ned: choix financement</button>
+    <button class="tab-btn" onclick="showTab('exTab','ex8')">Ex.8 — Kost: CMPC</button>
+    <button class="tab-btn" onclick="showTab('exTab','exFLR')">Ex. FLR — CMPC complet</button>
+    <button class="tab-btn" onclick="showTab('exTab','exPSA')">Ex. PSA/Renault — MEDAF</button>
+  </div>
+
+  <!-- EX 7 -->
+  <div id="exTab-ex7" class="tab-pane active">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Société Ned — Choix de financement</div>
+      <div class="theory-block">
+        Projet d'investissement : <strong>3 M€</strong>. Deux options :<br>
+        <strong>A —</strong> Emprunt bancaire sur 5 ans à <strong>10%</strong> in fine. Frais dossier = 1% (versés à la signature). Assurance = 21 k€/an.<br>
+        <strong>B —</strong> Emprunt obligataire à <strong>8.5%</strong> in fine 5 ans. Frais émission = 1.5% du brut. VN = 1 000 €. Prix remboursement = 1 010 €.<br>
+        IS = 33.33%.
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="badge orange">Option A</span> Emprunt bancaire</div>
+        <div id="ex7TableA"></div>
+        <div class="stat-box" style="margin-top:.75rem"><span class="stat-val" id="ex7TRIA">—</span><span class="stat-lbl">Coût de revient A</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge orange">Option B</span> Emprunt obligataire</div>
+        <div id="ex7TableB"></div>
+        <div class="stat-box" style="margin-top:.75rem"><span class="stat-val" id="ex7TRIB">—</span><span class="stat-lbl">Coût de revient B</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Conclusion</span></div>
+      <div id="ex7Conclusion" class="theory-block"></div>
+    </div>
+  </div>
+
+  <!-- EX 8 -->
+  <div id="exTab-ex8" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Société Kost — Coût du capital</div>
+      <div class="theory-block">
+        1 million d'actions, cours moyen = <strong>158 €</strong>. Dividende futur maintenu à <strong>10 €/action</strong> (g = 0). Emprunt de <strong>110 M€</strong>, remboursable dans 8 ans, taux = <strong>5.4%</strong>. IS = 33.33%.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Solution</span></div>
+      <div class="step ok">
+        <div class="step-num">Étape 1 — Coût des capitaux propres (Gordon-Shapiro avec g=0)</div>
+        k<sub>CP</sub> = D/P₀ = 10/158 = <mark>6.33%</mark><br>
+        <em>Avec g=0, la formule se simplifie : le cours = dividende perpétuel capitalisé.</em>
+      </div>
+      <div class="step ok">
+        <div class="step-num">Étape 2 — Valeurs de marché</div>
+        CP = 1 000 000 × 158 = <mark>158 M€</mark> &nbsp;|&nbsp; D = <mark>110 M€</mark>
+      </div>
+      <div class="step ok">
+        <div class="step-num">Étape 3 — Coût de la dette après IS</div>
+        k<sub>D</sub> ap. IS = 5.4% × (2/3) = <mark>3.6%</mark>
+      </div>
+      <div class="step ok">
+        <div class="step-num">Étape 4 — CMPC</div>
+        CMPC = 6.33% × (158/268) + 3.6% × (110/268) = 3.73% + 1.48% = <mark>5.21%</mark>
+      </div>
+      <div class="grid-3">
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent)">6.33%</span><span class="stat-lbl">k<sub>CP</sub></span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent2)">3.6%</span><span class="stat-lbl">k<sub>D</sub> ap. IS</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">5.21%</span><span class="stat-lbl">CMPC</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ex FLR -->
+  <div id="exTab-exFLR" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Entreprise FLR — CMPC complet (exercice MEDAF/CMPC)</div>
+      <div class="theory-block">2 000 actions à cours = 100 €. D₁ = 12 €, g = 1.5%. Emprunt de 60 000 € nominal, valeur actuelle 60 900 €, durée 7 ans, taux 9%, in fine. IS = 33.33%.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Solution</span></div>
+      <div class="step ok">
+        <div class="step-num">Étape 1 — k<sub>CP</sub> Gordon-Shapiro</div>
+        k<sub>CP</sub> = D₁/P₀ + g = 12/100 + 1.5% = <mark>13.5%</mark>
+      </div>
+      <div class="step ok">
+        <div class="step-num">Étape 2 — Coût de la dette (TRI des flux)</div>
+        Flux : t=0 : +60 900 &nbsp;|&nbsp; t=1..6 : −5 400 (coupons 9%×60k) &nbsp;|&nbsp; t=7 : −65 400 (remb. + coupon)<br>
+        TRI ≈ 8.65% → k<sub>D</sub> ap. IS = 8.65% × (2/3) = <mark>5.77%</mark>
+      </div>
+      <div class="step ok">
+        <div class="step-num">Étape 3 — Valeurs</div>
+        CP = 2 000 × 100 = <mark>200 000 €</mark> &nbsp;|&nbsp; D = <mark>60 900 €</mark> (valeur marché)
+      </div>
+      <div class="step ok">
+        <div class="step-num">Étape 4 — CMPC</div>
+        CMPC = 13.5% × (200/260.9) + 5.77% × (60.9/260.9) = 10.35% + 1.35% = <mark>11.70%</mark><br>
+        <em>→ L'investissement n'est acceptable que si sa rentabilité ≥ 11.70%.</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ex PSA/Renault -->
+  <div id="exTab-exPSA" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> PSA &amp; Renault — Bêta et MEDAF</div>
+      <div class="theory-block">
+        Rf = 3.30%. E(R<sub>m</sub>) = 9.26%.<br>
+        β<sub>PSA</sub> = 1.22 &nbsp;|&nbsp; β<sub>Renault</sub> = 0.93 (d'après régression sur les rentabilités mensuelles CAC 40).
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur interactif PSA / Renault</span></div>
+      <div class="grid-2">
+        <div>
+          <div class="control-group"><label>Rf (%)</label><div class="range-row"><input type="range" id="psaRf" min="0" max="6" step="0.1" value="3.3" oninput="updatePSA()"><span class="range-val" id="psaRfV">3.3%</span></div></div>
+          <div class="control-group"><label>E(Rm) (%)</label><div class="range-row"><input type="range" id="psaEm" min="5" max="15" step="0.1" value="9.26" oninput="updatePSA()"><span class="range-val" id="psaEmV">9.26%</span></div></div>
+          <div class="control-group"><label>β PSA</label><div class="range-row"><input type="range" id="psaBeta1" min="0.5" max="2.5" step="0.05" value="1.22" oninput="updatePSA()"><span class="range-val" id="psaBeta1V">1.22</span></div></div>
+          <div class="control-group"><label>β Renault</label><div class="range-row"><input type="range" id="psaBeta2" min="0.5" max="2.5" step="0.05" value="0.93" oninput="updatePSA()"><span class="range-val" id="psaBeta2V">0.93</span></div></div>
+        </div>
+        <div>
+          <div class="grid-2" style="margin-bottom:1rem">
+            <div class="stat-box"><span class="stat-val" id="psaER1">—</span><span class="stat-lbl">E(R) PSA (MEDAF)</span></div>
+            <div class="stat-box"><span class="stat-val" id="psaER2">—</span><span class="stat-lbl">E(R) Renault (MEDAF)</span></div>
+          </div>
+          <div class="theory-block">
+            PSA (β > 1) → titre <span class="hl2">agressif</span> — amplifie les variations du marché.<br>
+            Renault (β &lt; 1) → titre <span class="hl3">défensif</span> — amortit les variations.<br><br>
+            PSA offre une rentabilité exigée supérieure, mais est aussi plus risqué.
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:240px;margin-top:1rem"><canvas id="psaChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ QUIZ ═══ -->
+<div id="quiz" class="section">
+  <div class="section-hero" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+    <div>
+      <h1>Quiz — Choix de financement</h1>
+      <p>Testez vos connaissances sur le financement, le CMPC et la structure financière.</p>
+    </div>
+    <div class="score-counter">Score : <span id="quizScore" style="color:var(--accent);font-size:1.1rem;font-weight:600">0</span> / <span id="quizTotal">12</span></div>
+  </div>
+  <div id="quizContainer"></div>
+  <div style="text-align:center;margin-top:1rem"><button class="btn" onclick="resetQuiz()">🔄 Recommencer</button></div>
+</div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════════
+function go(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => { if(b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active'); });
+  window.scrollTo(0,0);
+}
+function showTab(group, id) {
+  const prefix = group+'-';
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(prefix+id).classList.add('active');
+  const sec = document.getElementById(prefix+id).closest('.section, main > *');
+  if(sec) sec.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+}
+
+// ══════════════════════════════════════════════════
+// CHARTS registry
+// ══════════════════════════════════════════════════
+const charts = {};
+function dk(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+function bO(xl='', yl='', extraScales={}) {
+  return { responsive:true, maintainAspectRatio:false, animation:{duration:300},
+    plugins:{ legend:{labels:{color:'#8892a4',font:{family:"'IBM Plex Sans'"}}},
+      tooltip:{backgroundColor:'#13161e',borderColor:'#252a38',borderWidth:1,titleColor:'#e8ecf4',bodyColor:'#8892a4'} },
+    scales:{ x:{title:{display:!!xl,text:xl,color:'#8892a4'},grid:{color:'rgba(37,42,56,0.8)'},ticks:{color:'#8892a4'}},
+             y:{title:{display:!!yl,text:yl,color:'#8892a4'},grid:{color:'rgba(37,42,56,0.8)'},ticks:{color:'#8892a4'}},...extraScales } };
+}
+function fmt(v, dec=2, suffix='') { return (typeof v==='number' && !isNaN(v)) ? v.toFixed(dec)+suffix : '—'; }
+function fmtK(v) { return fmt(v, 1, ' k€'); }
+function fmtPct(v) { return fmt(v*100, 2, '%'); }
+
+// ══════════════════════════════════════════════════
+// DPS
+// ══════════════════════════════════════════════════
+function updateDPS() {
+  const cv = +document.getElementById('coursAv').value;
+  const nv = +document.getElementById('nomVal').value;
+  const na = +document.getElementById('ancAct').value;
+  const nn = +document.getElementById('newAct').value;
+  const pe = +document.getElementById('prixEm').value;
+  document.getElementById('coursAvV').textContent = cv+' €';
+  document.getElementById('nomValV').textContent = nv+' €';
+  document.getElementById('ancActV').textContent = na+' M';
+  document.getElementById('newActV').textContent = nn+' M';
+  document.getElementById('prixEmV').textContent = pe+' €';
+  const prime = pe - nv;
+  const coursAp = (cv*na + pe*nn) / (na+nn);
+  const dps = cv - coursAp;
+  document.getElementById('primeEm').textContent = fmt(prime,1,' €');
+  document.getElementById('coursAp').textContent = fmt(coursAp,1,' €');
+  document.getElementById('valDPS').textContent = fmt(dps,1,' €');
+}
+updateDPS();
+
+// ══════════════════════════════════════════════════
+// BANCAIRE
+// ══════════════════════════════════════════════════
+function calcAmort(C, r, n, mode) {
+  const rows = [];
+  let cap = C;
+  const a_const = C * r / (1-(1+r)**(-n));
+  for(let t=1; t<=n; t++) {
+    const interet = cap * r;
+    let amort, annuite;
+    if(mode==='constant') { annuite = a_const; amort = annuite-interet; }
+    else if(mode==='linear') { amort = C/n; annuite = interet+amort; }
+    else { amort = (t===n ? C : 0); annuite = interet+amort; }
+    rows.push({ t, cap, interet, amort, annuite });
+    cap = Math.max(0, cap-amort);
+  }
+  return rows;
+}
+
+function updateBancaire() {
+  const C = +document.getElementById('banC').value;
+  const r = +document.getElementById('banR').value/100;
+  const n = +document.getElementById('banN').value;
+  const mode = document.getElementById('banMode').value;
+  document.getElementById('banCV').textContent = C+' k€';
+  document.getElementById('banRV').textContent = (r*100).toFixed(2)+'%';
+  document.getElementById('banNV').textContent = n+' ans';
+  const rows = calcAmort(C, r, n, mode);
+  const totalInt = rows.reduce((s,r)=>s+r.interet,0);
+  const a1 = rows[0].annuite;
+  const coutIS = r*100*(1-0.3333);
+  document.getElementById('banTotal').textContent = fmt(totalInt,2,' k€');
+  document.getElementById('banAnnuite').textContent = fmt(a1,2,' k€');
+  document.getElementById('banCout').textContent = fmt(coutIS,2,'%');
+  const tbody = document.getElementById('tbodyBancaire');
+  tbody.innerHTML = rows.map(r=>`<tr><td>${r.t}</td><td>${fmt(r.cap,2)}</td><td>${fmt(r.interet,2)}</td><td>${fmt(r.amort,2)}</td><td>${fmt(r.annuite,2)}</td></tr>`).join('');
+
+  // Compare 3 modes chart
+  const modes=['constant','linear','infine'];
+  const colors=['#4f9cf9','#63e6a0','#f97b4f'];
+  const labels2=['constant','amort. const.','in fine'];
+  dk('ban');
+  const ctx=document.getElementById('banChart').getContext('2d');
+  charts['ban']=new Chart(ctx,{type:'bar',
+    data:{labels:Array.from({length:n},(_,i)=>i+1),
+      datasets:modes.map((m,i)=>({label:labels2[i],data:calcAmort(C,r,n,m).map(rr=>rr.annuite),
+        backgroundColor:colors[i]+'33',borderColor:colors[i],borderWidth:2}))},
+    options:{...bO('Année','Annuité (k€)')}});
+}
+updateBancaire();
+
+// ══════════════════════════════════════════════════
+// TRI (Newton)
+// ══════════════════════════════════════════════════
+function calcTRI(fluxes) {
+  let r=0.05;
+  for(let iter=0;iter<200;iter++){
+    let f=0,df=0;
+    fluxes.forEach((fi,t)=>{ f+=fi/((1+r)**t); df+=-t*fi/((1+r)**(t+1)); });
+    if(Math.abs(df)<1e-15) break;
+    const nr=r-f/df;
+    if(Math.abs(nr-r)<1e-9) { r=nr; break; }
+    r=nr;
+  }
+  return r;
+}
+
+// ══════════════════════════════════════════════════
+// OBLIGATIONS
+// ══════════════════════════════════════════════════
+function updateOblig() {
+  const vn=+document.getElementById('oblVN').value;
+  const tn=+document.getElementById('oblTN').value/100;
+  const pe=+document.getElementById('oblPE').value/100;
+  const pr=+document.getElementById('oblPR').value/100;
+  const n=+document.getElementById('oblN').value;
+  const fe=+document.getElementById('oblFE').value/100;
+  document.getElementById('oblVNV').textContent=vn.toLocaleString('fr')+' €';
+  document.getElementById('oblTNV').textContent=(tn*100).toFixed(2)+'%';
+  document.getElementById('oblPEV').textContent=(pe*100).toFixed(1)+'%';
+  document.getElementById('oblPRV').textContent=(pr*100).toFixed(1)+'%';
+  document.getElementById('oblNV').textContent=n+' ans';
+  document.getElementById('oblFEV').textContent=(fe*100).toFixed(1)+'%';
+  const coupon=vn*tn;
+  const prixEm=vn*pe;
+  const prixRem=vn*pr;
+  const prodNet=prixEm*(1-fe);
+  document.getElementById('oblCoupon').textContent=fmt(coupon,0,' €');
+  document.getElementById('oblActuNet').textContent=fmt(prodNet,0,' €');
+  // TRA investisseur: cash out=-prixEm, coupons, remboursement prixRem
+  const fxInv=[-prixEm,...Array(n-1).fill(coupon),coupon+prixRem];
+  const tra=calcTRI(fxInv);
+  document.getElementById('oblTRA').textContent=fmtPct(tra);
+  // Coût émetteur ap IS: reçoit prodNet, paie coupons*(1-IS) + remb prixRem
+  const IS=0.3333;
+  const fxEm=[prodNet,...Array(n-1).fill(-coupon*(1-IS)-coupon*0),-coupon*(1-IS)-prixRem];
+  // Simplification : coupon*(1-IS) pour les périodes intermédiaires, remboursement à la fin
+  const fxEm2=[prodNet,...Array(n-1).fill(-coupon*(1-IS)),-coupon*(1-IS)-prixRem];
+  const cout=calcTRI(fxEm2);
+  document.getElementById('oblCout').textContent=fmtPct(cout);
+
+  // Sensibilité prix / taux
+  const trates=Array.from({length:25},(_,i)=>(i+1)*0.5/100);
+  const prices=trates.map(r=>{ let p=0; for(let t=1;t<=n;t++) p+=coupon/((1+r)**t); p+=prixRem/((1+r)**n); return p; });
+  dk('obl');
+  const ctx=document.getElementById('oblChart').getContext('2d');
+  charts['obl']=new Chart(ctx,{type:'line',data:{labels:trates.map(r=>(r*100).toFixed(1)+'%'),
+    datasets:[{label:'Prix obligation (€)',data:prices,borderColor:'#4f9cf9',backgroundColor:'rgba(79,156,249,0.08)',fill:true,borderWidth:2,pointRadius:0,tension:0.4},
+              {label:'Prix émission',data:Array(25).fill(prixEm),borderColor:'#f97b4f',borderDash:[5,3],pointRadius:0,borderWidth:1.5}]},
+    options:{...bO('Taux de marché (%)','Prix (€)')}});
+}
+updateOblig();
+
+// ══════════════════════════════════════════════════
+// COÛT REVIENT — exemples cours
+// ══════════════════════════════════════════════════
+function buildFluxTable(rows, totalFlux) {
+  const labels=['Amortissement capital','Intérêts','Éco. IS intérêts','Frais dossier / émission','Éco. IS frais','Emprunt reçu'];
+  return rows;
+}
+
+function initExBanc() {
+  // 20k€, 4 ans, 4.5% (dont 0.5% ass), in fine, frais 600€, IS=1/3
+  const C=20000, r=0.045, n=4, frais=600, IS=1/3;
+  const interet=-C*r; // -900
+  const ecoISint=Math.abs(interet)*IS; // 300
+  const ecoISfrais=frais*IS; // 200
+  const fluxes=[C-frais+frais*IS, interet+ecoISint, interet+ecoISint, interet+ecoISint, interet+ecoISint-C];
+  const tri=calcTRI(fluxes);
+  const rows=[
+    ['Amortissement capital','—','—','—','—',fmt(-C,0,' €')],
+    ['Intérêts',fmt(interet,0,' €'),fmt(interet,0,' €'),fmt(interet,0,' €'),fmt(interet,0,' €'),'—'],
+    ['Éco. IS intérêts',fmt(ecoISint,0,' €'),fmt(ecoISint,0,' €'),fmt(ecoISint,0,' €'),fmt(ecoISint,0,' €'),'—'],
+    ['Frais dossier',fmt(-frais,0,' €'),'—','—','—','—'],
+    ['Éco. IS frais',fmt(ecoISfrais,0,' €'),'—','—','—','—'],
+    ['Emprunt reçu',fmt(C,0,' €'),'—','—','—','—'],
+  ];
+  const tbody=document.getElementById('exBancTbody');
+  tbody.innerHTML=rows.map(r=>`<tr><td class="label">${r[0]}</td>${r.slice(1).map(v=>`<td>${v}</td>`).join('')}</tr>`).join('');
+  const totalRow=document.getElementById('exBancTotal');
+  totalRow.innerHTML=`<td class="label" style="color:var(--accent);font-family:'IBM Plex Sans'">Flux net</td>${fluxes.map(v=>`<td style="color:var(--accent)">${fmt(v,0,' €')}</td>`).join('')}`;
+  document.getElementById('exBancTRI').textContent=fmtPct(tri);
+  document.getElementById('exBancDiff').textContent=fmt((tri-r*(1-IS))*100,2,' pp');
+}
+
+function initExOblig() {
+  // 20M€, 4 ans, 6%, au pair in fine, frais 1.5%, IS=1/3
+  const C=20000000, r=0.06, n=4, feP=0.015, IS=1/3;
+  const frais=C*feP; const ecoISfrais=frais*IS;
+  const interet=-C*r; const ecoISint=Math.abs(interet)*IS;
+  const fluxes=[C-frais+ecoISfrais, interet+ecoISint, interet+ecoISint, interet+ecoISint, interet+ecoISint-C];
+  const tri=calcTRI(fluxes);
+  const rows=[
+    ['Amortissement capital','—','—','—','—',fmt(-C/1e6,2,' M€')],
+    ['Intérêts',fmt(interet/1e6,3,' M€'),fmt(interet/1e6,3,' M€'),fmt(interet/1e6,3,' M€'),fmt(interet/1e6,3,' M€'),'—'],
+    ['Éco. IS intérêts',fmt(ecoISint/1e6,3,' M€'),fmt(ecoISint/1e6,3,' M€'),fmt(ecoISint/1e6,3,' M€'),fmt(ecoISint/1e6,3,' M€'),'—'],
+    ['Frais émission',fmt(-frais/1e6,3,' M€'),'—','—','—','—'],
+    ['Éco. IS frais',fmt(ecoISfrais/1e6,3,' M€'),'—','—','—','—'],
+    ['Emprunt reçu',fmt(C/1e6,2,' M€'),'—','—','—','—'],
+  ];
+  const tbody=document.getElementById('exObligTbody');
+  tbody.innerHTML=rows.map(r=>`<tr><td class="label">${r[0]}</td>${r.slice(1).map(v=>`<td>${v}</td>`).join('')}</tr>`).join('');
+  const totalRow=document.getElementById('exObligTotal');
+  totalRow.innerHTML=`<td class="label" style="color:var(--accent);font-family:'IBM Plex Sans'">Flux net</td>${fluxes.map(v=>`<td style="color:var(--accent)">${fmt(v/1e6,3,' M€')}</td>`).join('')}`;
+  document.getElementById('exObligTRI').textContent=fmtPct(tri);
+  document.getElementById('exObligDiff').textContent=fmt((tri-r*(1-IS))*100,2,' pp');
+}
+
+// ══════════════════════════════════════════════════
+// CALCULATEUR COÛT REVIENT LIBRE
+// ══════════════════════════════════════════════════
+function updateCRCalc() {
+  const mt=+document.getElementById('crMt').value;
+  const taux=+document.getElementById('crTaux').value/100;
+  const n=+document.getElementById('crDuree').value;
+  const mode=document.getElementById('crMode').value;
+  const fraisRaw=+document.getElementById('crFrais').value;
+  const prime=+document.getElementById('crPrime').value;
+  const IS=+document.getElementById('crIS').value/100;
+  // Si frais<1 on suppose c'est un %, sinon c'est un montant
+  const frais=fraisRaw<1 ? fraisRaw*mt : fraisRaw;
+  const ecoISfrais=frais*IS;
+  const rows=calcAmort(mt, taux, n, mode);
+  const fluxes=[mt-frais+ecoISfrais,...rows.map(r=>-r.interet*(1-IS)-r.amort+(prime&&r.t===n?-prime:0))];
+  if(prime) fluxes[0]+=prime; // prime remboursement reçue à t=0 si obligation
+  const tri=calcTRI(fluxes);
+  document.getElementById('crTRI').textContent=fmtPct(tri);
+  const tbody=document.getElementById('crTbody');
+  tbody.innerHTML=rows.map((r,i)=>{
+    const fi=fluxes[i+1];
+    return `<tr><td>${r.t}</td><td>${fmt(r.cap,0)}</td><td>${fmt(r.interet,0)}</td><td>${fmt(r.interet*IS,0)}</td><td>${fmt(r.amort,0)}</td><td>${r.t===1?fmt(-frais,0):'0'}</td><td style="color:${fi>=0?'var(--accent3)':'var(--danger)'}">${fmt(fi,0)}</td></tr>`;
+  }).join('');
+}
+updateCRCalc();
+
+// ══════════════════════════════════════════════════
+// GORDON-SHAPIRO
+// ══════════════════════════════════════════════════
+function updateGS() {
+  const p0=+document.getElementById('gsP0').value;
+  const d1=+document.getElementById('gsD1').value;
+  const g=+document.getElementById('gsG').value/100;
+  document.getElementById('gsP0V').textContent=p0+' €';
+  document.getElementById('gsD1V').textContent=d1+' €';
+  document.getElementById('gsGV').textContent=(g*100).toFixed(2)+'%';
+  const k=d1/p0+g;
+  document.getElementById('gsK').textContent=fmtPct(k);
+  // Chart: k vs g
+  const gs=Array.from({length:21},(_,i)=>i*0.5/100);
+  const ks=gs.map(gi=>d1/p0+gi);
+  dk('gs');
+  const ctx=document.getElementById('gsChart').getContext('2d');
+  charts['gs']=new Chart(ctx,{type:'line',data:{labels:gs.map(gi=>(gi*100).toFixed(1)+'%'),
+    datasets:[{label:'k(g)',data:ks.map(v=>v*100),borderColor:'#4f9cf9',borderWidth:2,pointRadius:0,tension:0.3,fill:false},
+              {label:'g actuel',data:Array(21).fill(k*100),borderColor:'#f97b4f',borderDash:[4,3],pointRadius:0,borderWidth:1.5}]},
+    options:{...bO('Taux de croissance g (%)','k_CP (%)')}});
+}
+updateGS();
+
+// ══════════════════════════════════════════════════
+// MEDAF → kCP
+// ══════════════════════════════════════════════════
+function updateMedafKCP() {
+  const rf=+document.getElementById('mRf').value/100;
+  const em=+document.getElementById('mEm').value/100;
+  const beta=+document.getElementById('mBeta').value;
+  document.getElementById('mRfV').textContent=(rf*100).toFixed(1)+'%';
+  document.getElementById('mEmV').textContent=(em*100).toFixed(1)+'%';
+  document.getElementById('mBetaV').textContent=beta.toFixed(2);
+  document.getElementById('mKCP').textContent=fmtPct(rf+beta*(em-rf));
+}
+updateMedafKCP();
+
+// ══════════════════════════════════════════════════
+// CMPC CALCULATEUR
+// ══════════════════════════════════════════════════
+function toggleKCPMethod() {
+  const m=document.getElementById('calcKCPMethod').value;
+  document.getElementById('calcKCPDirect').style.display=m==='direct'?'':'none';
+  document.getElementById('calcKCPGS').style.display=m==='gs'?'':'none';
+  document.getElementById('calcKCPMedaf').style.display=m==='medaf'?'':'none';
+  updateCMPC();
+}
+function updateCMPC() {
+  const cp=+document.getElementById('calcCP').value;
+  const d=+document.getElementById('calcD').value;
+  const kd=+document.getElementById('calcKD').value/100;
+  const is=+document.getElementById('calcIS').value/100;
+  const m=document.getElementById('calcKCPMethod').value;
+  let kcp;
+  if(m==='direct') kcp=+document.getElementById('calcKCP').value/100;
+  else if(m==='gs') { const p0=+document.getElementById('calcP0').value,d1=+document.getElementById('calcD1').value,g=+document.getElementById('calcG').value/100; kcp=d1/p0+g; }
+  else { const rf=+document.getElementById('calcRf2').value/100,em=+document.getElementById('calcEm2').value/100,b=+document.getElementById('calcBeta2').value; kcp=rf+b*(em-rf); }
+  const V=cp+d, wCP=cp/V, wD=d/V;
+  const kdIS=kd*(1-is);
+  const cmpc=kcp*wCP+kdIS*wD;
+  document.getElementById('cmpcKCP').textContent=fmtPct(kcp);
+  document.getElementById('cmpcKDIS').textContent=fmtPct(kdIS);
+  document.getElementById('cmpcPdsCP').textContent=fmt(wCP*100,1,'%');
+  document.getElementById('cmpcResult').textContent=fmtPct(cmpc);
+  dk('cmpc');
+  const ctx=document.getElementById('cmpcChart').getContext('2d');
+  charts['cmpc']=new Chart(ctx,{type:'bar',
+    data:{labels:['k_CP','k_D ap. IS','CMPC'],
+      datasets:[{data:[kcp*100,kdIS*100,cmpc*100],backgroundColor:['rgba(79,156,249,0.6)','rgba(249,123,79,0.6)','rgba(99,230,160,0.8)'],borderColor:['#4f9cf9','#f97b4f','#63e6a0'],borderWidth:2}]},
+    options:{...bO('','Taux (%)'),plugins:{legend:{display:false},tooltip:{backgroundColor:'#13161e',borderColor:'#252a38',borderWidth:1,titleColor:'#e8ecf4',bodyColor:'#8892a4'}}}});
+}
+updateCMPC();
+
+// ══════════════════════════════════════════════════
+// STRUCTURE FINANCIÈRE
+// ══════════════════════════════════════════════════
+function drawTradChart() {
+  const levs=Array.from({length:20},(_,i)=>i*5);
+  const kd0=4, kcp0=10;
+  const kcps=levs.map(l=>{ const L=l/100; return kcp0+L*(kcp0-kd0)+Math.max(0,(L-0.5)*20); });
+  const kds=levs.map(l=>{ const L=l/100; return kd0+Math.max(0,(L-0.5)*8); });
+  const cmpcs=levs.map((l,i)=>{ const L=l/100; return kcps[i]*(1-L)+kds[i]*0.667*L; });
+  dk('trad');
+  const ctx=document.getElementById('tradChart').getContext('2d');
+  charts['trad']=new Chart(ctx,{type:'line',
+    data:{labels:levs.map(l=>l+'%'),
+      datasets:[
+        {label:'k_CP',data:kcps,borderColor:'#4f9cf9',pointRadius:0,borderWidth:2,tension:0.4,fill:false},
+        {label:'k_D ap. IS',data:kds,borderColor:'#f97b4f',pointRadius:0,borderWidth:2,tension:0.4,fill:false},
+        {label:'CMPC',data:cmpcs,borderColor:'#63e6a0',pointRadius:0,borderWidth:3,tension:0.4,fill:false},
+      ]},
+    options:{...bO('Levier D/V (%)','Coût (%)')}});
+}
+
+function updateMM() {
+  const v0=+document.getElementById('mmV0').value;
+  const d=+document.getElementById('mmD').value;
+  const is=+document.getElementById('mmIS').value/100;
+  document.getElementById('mmV0V').textContent=v0+' M€';
+  document.getElementById('mmDV').textContent=d+' M€';
+  document.getElementById('mmISV').textContent=(is*100).toFixed(0)+'%';
+  const ecoIS=is*d;
+  const vED=v0+ecoIS;
+  document.getElementById('mmVEND').textContent=fmt(v0,0,' M€');
+  document.getElementById('mmEcoIS').textContent=fmt(ecoIS,1,' M€');
+  document.getElementById('mmVED').textContent=fmt(vED,1,' M€');
+  const ds=Array.from({length:21},(_,i)=>i*10);
+  dk('mm');
+  const ctx=document.getElementById('mmChart').getContext('2d');
+  charts['mm']=new Chart(ctx,{type:'line',
+    data:{labels:ds.map(d=>d+' M€'),
+      datasets:[
+        {label:'V(sans dette)',data:Array(21).fill(v0),borderColor:'#8892a4',borderDash:[5,3],pointRadius:0,borderWidth:1.5,fill:false},
+        {label:'V(endettée) = V₀ + IS×D',data:ds.map(di=>v0+is*di),borderColor:'#63e6a0',pointRadius:0,borderWidth:2.5,fill:false,tension:0.1},
+        {label:'D actuel',data:ds.map(di=>Math.abs(di-d)<5?vED:null),pointRadius:8,backgroundColor:'#f97b4f',borderColor:'#fff',borderWidth:2,showLine:false}
+      ]},
+    options:{...bO('Dette D (M€)','Valeur entreprise (M€)')}});
+}
+
+function drawTradeoff() {
+  const levs=Array.from({length:21},(_,i)=>i*5);
+  const vBase=200;
+  const vEndetee=levs.map(l=>{ const D=l*2; const ecoIS=0.33*D; const coutFaillite=Math.max(0,(l-40)*3); return vBase+ecoIS-coutFaillite; });
+  dk('tradeoff');
+  const ctx=document.getElementById('tradeoffChart').getContext('2d');
+  charts['tradeoff']=new Chart(ctx,{type:'line',
+    data:{labels:levs.map(l=>l+'%'),
+      datasets:[
+        {label:'V(sans dette)',data:Array(21).fill(vBase),borderColor:'#8892a4',borderDash:[5,3],pointRadius:0,borderWidth:1.5,fill:false},
+        {label:'V entreprise (trade-off)',data:vEndetee,borderColor:'#4f9cf9',pointRadius:0,borderWidth:2.5,fill:false,tension:0.4,backgroundColor:'rgba(79,156,249,0.05)'},
+        {label:'Éco. IS seule (M&M)',data:levs.map(l=>vBase+0.33*l*2),borderColor:'#63e6a0',borderDash:[3,3],pointRadius:0,borderWidth:1.5,fill:false},
+      ]},
+    options:{...bO('Levier D/CP (%)','Valeur entreprise (M€)')}});
+}
+
+function updateSF() {
+  const v0=+document.getElementById('sfV0').value;
+  const lev=+document.getElementById('sfLevier').value/100;
+  const kd0=+document.getElementById('sfKD0').value/100;
+  const kcp0=+document.getElementById('sfKCP0').value/100;
+  const is=+document.getElementById('sfIS2').value/100;
+  document.getElementById('sfV0V').textContent=v0+' M€';
+  document.getElementById('sfLevierV').textContent=(lev*100).toFixed(0)+'%';
+  document.getElementById('sfKD0V').textContent=(kd0*100).toFixed(2)+'%';
+  document.getElementById('sfKCP0V').textContent=(kcp0*100).toFixed(2)+'%';
+  document.getElementById('sfIS2V').textContent=(is*100).toFixed(0)+'%';
+  // kCP increases with leverage (financial risk)
+  const kcp=kcp0+(lev>0.5?kcp0*(lev-0.5)*2:0)+kcp0*lev*0.5;
+  const kd=kd0*(1+Math.max(0,(lev-0.5)*3));
+  const cmpc=kcp*(1-lev)+kd*(1-is)*lev;
+  const valeur=v0*(1+is*lev); // simplified MM with IS
+  document.getElementById('sfKCPres').textContent=fmtPct(kcp);
+  document.getElementById('sfKDres').textContent=fmtPct(kd*(1-is));
+  document.getElementById('sfCMPC').textContent=fmtPct(cmpc);
+  document.getElementById('sfValeur').textContent=fmt(valeur,1,' M€');
+  const levs=Array.from({length:19},(_,i)=>i*5);
+  const cmpcs=levs.map(l=>{ const L=l/100; const kc=kcp0+(L>0.5?kcp0*(L-0.5)*2:0)+kcp0*L*0.5; const kd2=kd0*(1+Math.max(0,(L-0.5)*3)); return (kc*(1-L)+kd2*(1-is)*L)*100; });
+  dk('sf');
+  const ctx=document.getElementById('sfChart').getContext('2d');
+  charts['sf']=new Chart(ctx,{type:'line',data:{labels:levs.map(l=>l+'%'),
+    datasets:[{label:'CMPC (%)',data:cmpcs,borderColor:'#4f9cf9',pointRadius:0,borderWidth:2.5,fill:false,tension:0.4},
+              {label:'Levier actuel',data:levs.map(l=>Math.abs(l-lev*100)<3?cmpc*100:null),pointRadius:8,backgroundColor:'#f97b4f',borderColor:'#fff',borderWidth:2,showLine:false}]},
+    options:{...bO('Levier D/(D+CP) (%)','CMPC (%)')}});
+}
+
+// ══════════════════════════════════════════════════
+// CONTRAINTES
+// ══════════════════════════════════════════════════
+function updateContraintes() {
+  const cp=+document.getElementById('conCP').value||0;
+  const df=+document.getElementById('conDF').value||0.01;
+  const caf=+document.getElementById('conCAF').value||0.01;
+  const ebe=+document.getElementById('conEBE').value||0.01;
+  const rex=+document.getElementById('conREX').value||0;
+  const ff=+document.getElementById('conFF').value||0.01;
+  const ratios=[
+    {lbl:'CP/DF',val:cp/df,seuil:1,op:'>',decimals:2},
+    {lbl:'DF/CP',val:df/cp,seuil:1,op:'<',decimals:2},
+    {lbl:'CP/(CP+DF)',val:cp/(cp+df)*100,seuil:50,op:'>',decimals:1,suffix:'%'},
+    {lbl:'DF/CAF',val:df/caf,seuil:3.5,op:'<',decimals:2},
+    {lbl:'DF/EBE',val:df/ebe,seuil:4,op:'<',decimals:2},
+    {lbl:'REX/Frais fin.',val:rex/ff,seuil:3,op:'>',decimals:2},
+  ];
+  const tbody=document.getElementById('conTbody');
+  tbody.innerHTML=ratios.map(r=>{
+    const ok=(r.op==='>'?r.val>r.seuil:r.val<r.seuil);
+    const color=ok?'var(--accent3)':'var(--danger)';
+    const icon=ok?'✅':'⚠️';
+    return `<tr><td class="label">${r.lbl}</td><td style="color:${color}">${r.val.toFixed(r.decimals||2)}${r.suffix||''}</td><td>${r.op} ${r.seuil}${r.suffix||''}</td><td>${icon}</td></tr>`;
+  }).join('');
+}
+updateContraintes();
+
+// ══════════════════════════════════════════════════
+// EX 7 — NED
+// ══════════════════════════════════════════════════
+function initEx7() {
+  const C=3000000, IS=1/3;
+  // Option A: taux 10% in fine, frais 1%=30000, assurance 21000/an
+  const fraisA=C*0.01, assA=21000;
+  const interA=-C*0.10, ecoISintA=Math.abs(interA+assA)*IS;
+  const fluxA=[C-fraisA+fraisA*IS,...Array(4).map((_,i)=>interA-assA+ecoISintA),-C+interA-assA+ecoISintA];
+  // Fix: flux array for 5 years
+  const fluxA2=[C-fraisA+fraisA*IS];
+  for(let t=1;t<=4;t++) fluxA2.push(interA-assA+(Math.abs(interA)+assA)*IS);
+  fluxA2.push(interA-assA+(Math.abs(interA)+assA)*IS-C);
+  const triA=calcTRI(fluxA2);
+
+  // Option B: 8.5% in fine, frais 1.5%, VN=1000, prix remb 1010
+  const nb=C/1000; // 3000 obligations
+  const fraisB=C*0.015, prodNetB=C-fraisB;
+  const couponB=C*0.085, primeRembB=nb*10; // 1010-1000=10/obl
+  const ecoISBcoupon=couponB*IS, ecoISBfrais=fraisB*IS;
+  const fluxB2=[prodNetB+ecoISBfrais];
+  for(let t=1;t<=4;t++) fluxB2.push(-couponB+ecoISBcoupon);
+  fluxB2.push(-couponB+ecoISBcoupon-C-primeRembB+primeRembB*IS*0); // prime remb non déductible directement simplifié
+  // Simplification: remboursement = C+prime, intérêts déductibles
+  const fluxB3=[prodNetB+ecoISBfrais];
+  for(let t=1;t<=4;t++) fluxB3.push(-couponB+ecoISBcoupon);
+  fluxB3.push(-couponB+ecoISBcoupon-(C+primeRembB));
+  const triB=calcTRI(fluxB3);
+
+  document.getElementById('ex7TRIA').textContent=fmtPct(triA);
+  document.getElementById('ex7TRIB').textContent=fmtPct(triB);
+
+  const mkTable=(fluxes,label)=>{
+    let h=`<div style="overflow-x:auto"><table><thead><tr><th>${label}</th>${['t=0','t=1','t=2','t=3','t=4','t=5'].map(t=>`<th>${t}</th>`).join('')}</tr></thead>`;
+    h+=`<tbody><tr class="highlight-row"><td class="label">Flux net</td>${fluxes.map(v=>`<td>${fmt(v/1000,1,' k€')}</td>`).join('')}</tr></tbody></table></div>`;
+    return h;
+  };
+  document.getElementById('ex7TableA').innerHTML=mkTable(fluxA2,'Option A — Bancaire');
+  document.getElementById('ex7TableB').innerHTML=mkTable(fluxB3,'Option B — Obligataire');
+
+  const concl=document.getElementById('ex7Conclusion');
+  const better=triA<triB?'A (bancaire)':'B (obligataire)';
+  concl.innerHTML=`La comparaison des coûts de revient montre que l'option <strong>${better}</strong> est la moins coûteuse.
+    <br><br>Option A : <mark>${fmtPct(triA)}</mark> &nbsp;|&nbsp; Option B : <mark>${fmtPct(triB)}</mark>
+    <br><br>⚠️ Au-delà du coût, d'autres critères entrent en jeu : flexibilité (renégociation emprunt bancaire vs contraintes obligataires), 
+    garanties exigées, dilution potentielle, accès aux marchés.`;
+}
+
+// ══════════════════════════════════════════════════
+// PSA / RENAULT
+// ══════════════════════════════════════════════════
+function updatePSA() {
+  const rf=+document.getElementById('psaRf').value/100;
+  const em=+document.getElementById('psaEm').value/100;
+  const b1=+document.getElementById('psaBeta1').value;
+  const b2=+document.getElementById('psaBeta2').value;
+  document.getElementById('psaRfV').textContent=(rf*100).toFixed(2)+'%';
+  document.getElementById('psaEmV').textContent=(em*100).toFixed(2)+'%';
+  document.getElementById('psaBeta1V').textContent=b1.toFixed(2);
+  document.getElementById('psaBeta2V').textContent=b2.toFixed(2);
+  const er1=rf+b1*(em-rf), er2=rf+b2*(em-rf);
+  document.getElementById('psaER1').textContent=fmtPct(er1);
+  document.getElementById('psaER2').textContent=fmtPct(er2);
+  // SML chart
+  const betas=Array.from({length:26},(_,i)=>i*0.1);
+  const sml=betas.map(b=>(rf+b*(em-rf))*100);
+  dk('psa');
+  const ctx=document.getElementById('psaChart').getContext('2d');
+  charts['psa']=new Chart(ctx,{type:'scatter',data:{labels:betas,
+    datasets:[
+      {label:'SML',data:betas.map((b,i)=>({x:b,y:sml[i]})),showLine:true,borderColor:'#4f9cf9',pointRadius:0,borderWidth:2,fill:false},
+      {label:`PSA β=${b1}`,data:[{x:b1,y:er1*100}],pointRadius:10,backgroundColor:'#f97b4f',borderColor:'#fff',borderWidth:2},
+      {label:`Renault β=${b2}`,data:[{x:b2,y:er2*100}],pointRadius:10,backgroundColor:'#63e6a0',borderColor:'#fff',borderWidth:2},
+      {label:'Marché β=1',data:[{x:1,y:em*100}],pointRadius:8,backgroundColor:'#f9e44f',borderColor:'#fff',borderWidth:2},
+    ]},
+    options:{...bO('β','E(R) (%)'),scales:{x:{min:0,max:2.5,title:{display:true,text:'β',color:'#8892a4'},grid:{color:'rgba(37,42,56,0.8)'},ticks:{color:'#8892a4'}},y:{title:{display:true,text:'E(R) (%)',color:'#8892a4'},grid:{color:'rgba(37,42,56,0.8)'},ticks:{color:'#8892a4'}}}}});
+}
+updatePSA();
+
+// ══════════════════════════════════════════════════
+// QUIZ
+// ══════════════════════════════════════════════════
+const quizData=[
+  {q:"Qu'est-ce que le CMPC ?",opts:["Le taux d'intérêt moyen des dettes","Le coût moyen pondéré du capital, taux minimum de rentabilité exigé par les apporteurs de fonds","Le coût des seuls capitaux propres","Le taux d'actualisation du marché obligataire"],ans:1,exp:"Le CMPC (Coût Moyen Pondéré du Capital) combine le coût des capitaux propres et le coût de la dette après IS, pondérés par leurs poids dans la structure financière. C'est le taux minimum que tout investissement doit rapporter."},
+  {q:"Dans la formule de Gordon-Shapiro, que représente 'g' ?",opts:["Le taux sans risque","Le taux de croissance perpétuel des dividendes","Le bêta de l'action","Le rendement du marché"],ans:1,exp:"g est le taux de croissance constant et perpétuel des dividendes. La formule k = D₁/P₀ + g donne la rentabilité exigée par les actionnaires."},
+  {q:"Qu'est-ce que la prime d'émission d'une action ?",opts:["La différence entre la valeur nominale et le cours actuel","La différence entre le prix d'émission et la valeur nominale","Les frais de dossier pour émettre de nouvelles actions","Le dividende versé aux nouveaux actionnaires"],ans:1,exp:"La prime d'émission = Prix d'émission − Valeur nominale. Elle reflète la plus-value accumulée par l'entreprise. Elle va dans les réserves et renforce les capitaux propres."},
+  {q:"Selon Modigliani-Miller (1958), sans impôt sur les sociétés :",opts:["La structure financière optimale maximise la valeur de l'entreprise","La valeur de l'entreprise est indépendante de sa structure financière","L'endettement maximal est toujours préférable","Le CMPC augmente avec l'endettement"],ans:1,exp:"Sans IS, M&M démontrent par un mécanisme d'arbitrage que la valeur d'une entreprise est indépendante de sa structure financière. 'La taille d'une pizza ne dépend pas de la façon dont on la coupe.'"},
+  {q:"Avec l'IS (M&M 1963), la valeur de l'entreprise endettée est :",opts:["Égale à la valeur sans dette","Inférieure à la valeur sans dette","V(END) + IS × D","V(END) × (1 − IS)"],ans:2,exp:"V(ED) = V(END) + IS × D. L'économie d'IS liée à la déductibilité des intérêts vient s'ajouter à la valeur sans dette. Cela incite à l'endettement maximal, sous réserve des coûts de faillite."},
+  {q:"Le DPS (droit préférentiel de souscription) protège les anciens actionnaires contre :",opts:["La hausse des taux d'intérêt","La dilution de leur participation due à une augmentation de capital","Le risque de faillite de l'entreprise","La baisse du dividende"],ans:1,exp:"Le DPS permet aux anciens actionnaires de souscrire prioritairement aux nouvelles actions ou de vendre leur droit. Cela compense la dilution du cours liée à l'émission d'actions à un prix inférieur au cours."},
+  {q:"Le coût de revient d'un emprunt sans frais est :",opts:["Le taux nominal","Le taux nominal × (1 + IS)","Le taux nominal × (1 − IS)","Le TRI des flux bruts"],ans:2,exp:"Sans frais, le coût de revient après IS = taux nominal × (1 − taux IS). Les intérêts étant déductibles, l'économie d'IS réduit le coût effectif pour l'entreprise."},
+  {q:"Qu'est-ce que l'autofinancement ?",opts:["Le total des capitaux propres","La CAF moins les dividendes distribués","Le résultat net de l'exercice","L'ensemble des ressources externes"],ans:1,exp:"AF = CAF − Dividendes distribués. L'autofinancement renforce l'indépendance financière, augmente la capacité d'endettement, mais son coût implicite est le taux de rentabilité exigé par les actionnaires."},
+  {q:"Le ratio de capacité de remboursement DF/CAF doit être :",opts:["Supérieur à 3","Inférieur à 3 ou 4","Égal à 1","Supérieur à 10"],ans:1,exp:"Le ratio DF/CAF < 3 à 4 est la règle prudentielle : l'entreprise doit pouvoir rembourser ses dettes en moins de 3 à 4 ans de capacité d'autofinancement. Au-delà, les banques considèrent la dette excessive."},
+  {q:"Les coûts de faillite dans la 'trade-off theory' impliquent :",opts:["Qu'on doit toujours maximiser l'endettement","Qu'il existe un niveau optimal d'endettement entre l'avantage fiscal et les coûts de défaillance","Que l'endettement n'a aucun coût","Que les actionnaires supportent seuls le risque"],ans:1,exp:"La trade-off theory (théorie du compromis) prédit un niveau optimal d'endettement où la valeur marginale du bouclier fiscal égale le coût marginal de faillite. Au-delà, les coûts de faillite dominent."},
+  {q:"Qu'est-ce qu'un crédit-bail (leasing) ?",opts:["Un emprunt bancaire classique","Un contrat de location avec option d'achat à prix fixé à l'avance","Une émission d'obligations","Une augmentation de capital déguisée"],ans:1,exp:"Le crédit-bail est un contrat de location (bien meuble ou immeuble) avec option d'achat à prix convenu. Le bien reste propriété du bailleur jusqu'à la levée de l'option. C'est un engagement hors-bilan pour le locataire."},
+  {q:"Le ratio d'autonomie financière (CP/DF) doit être :",opts:["Inférieur à 0.5","Supérieur à 1","Égal à 1","Supérieur à 3"],ans:1,exp:"CP/DF > 1 signifie que les capitaux propres dépassent les dettes financières. C'est la règle d'or de l'autonomie financière : l'endettement ne doit pas dépasser les capitaux propres."}
+];
+
+let score=0, answered=new Array(quizData.length).fill(false);
+function renderQuiz(){
+  document.getElementById('quizContainer').innerHTML=quizData.map((q,qi)=>`
+    <div class="card"><div class="quiz-q">${qi+1}. ${q.q}</div>
+    ${q.opts.map((o,oi)=>`<div class="quiz-opt" id="qopt-${qi}-${oi}" onclick="ansQ(${qi},${oi})">${o}</div>`).join('')}
+    <div class="quiz-feedback" id="qfb-${qi}"></div></div>`).join('');
+  document.getElementById('quizTotal').textContent=quizData.length;
+}
+function ansQ(qi,oi){
+  if(answered[qi]) return;
+  answered[qi]=true;
+  const q=quizData[qi];
+  document.querySelectorAll(`[id^="qopt-${qi}-"]`).forEach(e=>e.style.pointerEvents='none');
+  document.getElementById(`qopt-${qi}-${oi}`).classList.add(oi===q.ans?'correct':'wrong');
+  if(oi!==q.ans) document.getElementById(`qopt-${qi}-${q.ans}`).classList.add('correct');
+  const fb=document.getElementById(`qfb-${qi}`);
+  if(oi===q.ans){score++;fb.className='quiz-feedback show ok';fb.textContent='✅ Correct ! '+q.exp;}
+  else{fb.className='quiz-feedback show ko';fb.textContent='❌ Incorrect. '+q.exp;}
+  document.getElementById('quizScore').textContent=score;
+}
+function resetQuiz(){score=0;answered=new Array(quizData.length).fill(false);document.getElementById('quizScore').textContent=0;renderQuiz();}
+
+// ══════════════════════════════════════════════════
+// INIT ALL
+// ══════════════════════════════════════════════════
+updateMM();
+updateSF();
+drawTradChart();
+drawTradeoff();
+initExBanc();
+initExOblig();
+initEx7();
+renderQuiz();
+updatePSA();
+</script>
+</body>
+</html>

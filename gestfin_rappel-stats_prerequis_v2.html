@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistiques pour la finance - Prerequis courts</title>
+<script src="../node_modules/chart.js/dist/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#0d0f14;--surface:#13161e;--surface2:#1a1e2a;--border:#252a38;
+  --accent:#0e7490;--accent2:#f59e0b;--accent3:#10b981;--accent4:#06b6d4;
+  --text:#e8ecf4;--text2:#8892a4;--text3:#5a6478;--danger:#ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:#0a1628;border-bottom:3px solid var(--accent);padding:0 2rem;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:2rem;height:62px}
+.logo{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--accent4);white-space:nowrap}
+.logo span{color:var(--text2);font-size:.72rem;font-family:'IBM Plex Sans',sans-serif;display:block}
+nav{display:flex;gap:.2rem;overflow-x:auto;flex:1;scrollbar-width:thin}
+.nav-btn{background:none;border:1px solid transparent;color:var(--text2);cursor:pointer;padding:.35rem .85rem;border-radius:4px;font-size:.78rem;white-space:nowrap;transition:all .15s}
+.nav-btn:hover{color:var(--text);background:var(--surface2)}
+.nav-btn.active{color:var(--accent4);background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3)}
+main{padding:2rem;max-width:1280px;margin:0 auto}
+.section{display:none}
+.section.active{display:block}
+.section-hero{margin-bottom:1.75rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border)}
+.section-hero h1{font-family:'Playfair Display',serif;font-size:1.85rem;color:var(--text);margin-bottom:.35rem}
+.section-hero p{font-size:.9rem;color:var(--text2);line-height:1.6;max-width:980px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.35rem;margin-bottom:1.35rem}
+.card-title{font-family:'Playfair Display',serif;font-size:1.12rem;color:var(--text);margin-bottom:.9rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:.62rem;padding:2px 8px;border-radius:3px;font-weight:600;letter-spacing:.05em;white-space:nowrap;background:rgba(14,116,144,.2);color:var(--accent4);border:1px solid rgba(14,116,144,.4)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.35rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.1rem}
+@media(max-width:920px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.theory-block{background:var(--surface2);border-radius:7px;padding:.95rem 1.05rem;font-size:.87rem;line-height:1.7;color:var(--text2);margin-bottom:.8rem}
+.theory-block strong{color:var(--text)}
+.formula{background:var(--surface2);border-left:3px solid var(--accent);padding:.75rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:.84rem;color:var(--accent3);border-radius:0 5px 5px 0;margin:.65rem 0;overflow-x:auto}
+.stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.9rem;text-align:center}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-size:1.35rem;font-weight:600;color:var(--accent4);display:block}
+.stat-lbl{font-size:.68rem;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem}
+.control-group{margin-bottom:.85rem}
+.control-group label{display:block;font-size:.72rem;color:var(--text2);margin-bottom:.3rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase}
+input[type="range"]{width:100%;accent-color:var(--accent4)}
+.range-row{display:flex;align-items:center;gap:.75rem}
+.range-val{font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--accent4);min-width:62px;text-align:right;font-weight:600}
+.chart-wrap{position:relative;height:300px;width:100%}
+.chart-wrap.short{height:230px}
+.note{font-size:.74rem;color:var(--text3);font-style:italic;margin-top:.45rem;line-height:1.5}
+.step{background:var(--surface2);border-radius:7px;padding:.85rem 1rem;margin-bottom:.65rem;border-left:3px solid var(--accent3);font-size:.84rem;color:var(--text2);line-height:1.65}
+.step strong{color:var(--text)}
+.pill-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.35rem}
+.pill{background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.28);color:var(--accent4);padding:.28rem .55rem;border-radius:999px;font-size:.73rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:var(--surface2);padding:.55rem .85rem;text-align:left;color:var(--text2);font-weight:600;font-size:.7rem;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:.5rem .85rem;border-bottom:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace}
+tr:last-child td{border-bottom:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Stats pour la finance<span>Sas de prerequis projetable - L2 AES</span></div>
+  <nav>
+    <button class="nav-btn active" data-target="accueil">Accueil</button>
+    <button class="nav-btn" data-target="rentabilite">Rentabilite</button>
+    <button class="nav-btn" data-target="esperance">Esperance</button>
+    <button class="nav-btn" data-target="variance">Variance</button>
+    <button class="nav-btn" data-target="covariance">Covariance</button>
+    <button class="nav-btn" data-target="correlation">Correlation</button>
+    <button class="nav-btn" data-target="vision">Vision (E,s)</button>
+  </nav>
+</header>
+<main>
+  <section id="accueil" class="section active">
+    <div class="section-hero">
+      <h1>Rappels de statistiques utiles avant le chapitre 2</h1>
+      <p>Ce module court ne remplace pas le chapitre de theorie financiere. Il remet a niveau les outils minimums pour lire un couple <em>rendement-risque</em>, comprendre la diversification et entrer plus sereinement dans Markowitz.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title"><span class="badge">01</span> Ce que l'on mesure</div>
+        <div class="theory-block"><strong>Rentabilite</strong> : combien un actif rapporte sur une periode.</div>
+        <div class="theory-block"><strong>Esperance</strong> : la rentabilite moyenne attendue ou observee.</div>
+        <div class="theory-block"><strong>Risque</strong> : la dispersion autour de cette moyenne.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge">02</span> Pourquoi deux actifs ensemble ?</div>
+        <div class="theory-block">La question centrale n'est pas seulement <strong>combien chaque actif rapporte</strong>, mais aussi <strong>comment ils evoluent ensemble</strong>. C'est le role de la covariance puis de la correlation.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge">03</span> Jusqu'ou va ce module ?</div>
+        <div class="theory-block">On s'arrete volontairement avant le beta et le MEDAF. L'objectif est d'arriver au seuil utile pour le chapitre 2, sans empieter sur la suite du cours.</div>
+        <div class="pill-row">
+          <span class="pill">rentabilite</span>
+          <span class="pill">E(R)</span>
+          <span class="pill">s</span>
+          <span class="pill">cov</span>
+          <span class="pill">corr</span>
+          <span class="pill">vision (E,s)</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fil directeur</div>
+      <div class="grid-3">
+        <div class="stat-box"><span class="stat-val">E(R)</span><span class="stat-lbl">mesurer la recompense moyenne</span></div>
+        <div class="stat-box"><span class="stat-val">s(R)</span><span class="stat-lbl">mesurer la dispersion du risque</span></div>
+        <div class="stat-box"><span class="stat-val">corr(1,2)</span><span class="stat-lbl">comprendre la diversification</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="rentabilite" class="section">
+    <div class="section-hero">
+      <h1>Rentabilite d'un actif</h1>
+      <p>Premier geste : transformer une variation de prix en rentabilite. C'est la brique de base de toute la suite.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge">Formule</span></div>
+      <div class="formula">R_t = (P_t - P_(t-1)) / P_(t-1)</div>
+      <div class="theory-block"><strong>Lecture economique :</strong> une rentabilite de 5 % signifie qu'un placement de 100 EUR devient 105 EUR sur la periode, hors frais et hors impot.</div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Simulateur simple</div>
+        <div class="control-group">
+          <label>Prix initial</label>
+          <div class="range-row"><input id="price0" type="range" min="50" max="200" step="1" value="100"><span class="range-val" id="price0v">100</span></div>
+        </div>
+        <div class="control-group">
+          <label>Prix final</label>
+          <div class="range-row"><input id="price1" type="range" min="50" max="200" step="1" value="112"><span class="range-val" id="price1v">112</span></div>
+        </div>
+        <div class="grid-2">
+          <div class="stat-box"><span class="stat-val" id="rentPct">12.00%</span><span class="stat-lbl">rentabilite</span></div>
+          <div class="stat-box"><span class="stat-val" id="rentGain">+12.00</span><span class="stat-lbl">gain pour 100 EUR</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Exemple de serie courte</div>
+        <table>
+          <thead><tr><th>Mois</th><th>Prix</th><th>Rentabilite</th></tr></thead>
+          <tbody id="rentTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="esperance" class="section">
+    <div class="section-hero">
+      <h1>Esperance de rentabilite</h1>
+      <p>L'esperance resume la rentabilite moyenne. Ici, on la lit comme une moyenne historique simple sur un petit echantillon.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge">Formule</span></div>
+      <div class="formula">E(R) = moyenne des rentabilites observees</div>
+      <div class="theory-block">Dans ce sas, on reste sur l'idee la plus utile : <strong>prendre du recul sur une serie de rentabilites</strong>. Le chapitre 2 reprendra ensuite ces objets dans la theorie du portefeuille.</div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Deux actifs a comparer</div>
+        <div class="theory-block">Actif A : serie plus reguliere. Actif B : serie plus nerveuse. Ils peuvent pourtant avoir une moyenne proche.</div>
+        <div class="grid-2">
+          <div class="stat-box"><span class="stat-val" id="meanA">-</span><span class="stat-lbl">E(R) actif A</span></div>
+          <div class="stat-box"><span class="stat-val" id="meanB">-</span><span class="stat-lbl">E(R) actif B</span></div>
+        </div>
+        <p class="note">Une esperance plus forte ne suffit pas : il faut aussi regarder la dispersion autour de cette moyenne.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Lecture visuelle</div>
+        <div class="chart-wrap short"><canvas id="meanChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="variance" class="section">
+    <div class="section-hero">
+      <h1>Variance et ecart-type</h1>
+      <p>Le risque, ici, est lu comme une dispersion autour de la moyenne. Plus les observations sont ecartees, plus le risque est eleve.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge">Convention retenue</span></div>
+      <div class="formula">Estimateur d'echantillon : s^2 = Somme[(R_i - moyenne)^2] / (n - 1)</div>
+      <div class="theory-block">On retient <strong>n - 1</strong> pour rester coherent avec une lecture empirique de donnees historiques et avec les calculs usuels dans Excel.</div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Comparaison de dispersion</div>
+        <div class="grid-2">
+          <div class="stat-box"><span class="stat-val" id="varA">-</span><span class="stat-lbl">variance A</span></div>
+          <div class="stat-box"><span class="stat-val" id="stdA">-</span><span class="stat-lbl">ecart-type A</span></div>
+          <div class="stat-box"><span class="stat-val" id="varB">-</span><span class="stat-lbl">variance B</span></div>
+          <div class="stat-box"><span class="stat-val" id="stdB">-</span><span class="stat-lbl">ecart-type B</span></div>
+        </div>
+        <div class="step"><strong>A retenir :</strong> deux actifs peuvent avoir une moyenne voisine mais des niveaux de risque tres differents.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Visualisation simplifiee</div>
+        <div class="chart-wrap short"><canvas id="riskChart"></canvas></div>
+        <p class="note">La courbe en cloche est seulement une image pedagogique de la dispersion. Elle ne signifie pas que les rentabilites financieres suivent toujours une loi normale.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="covariance" class="section">
+    <div class="section-hero">
+      <h1>Covariance</h1>
+      <p>La covariance indique si deux actifs ont tendance a varier dans le meme sens, dans des sens opposes, ou sans lien net.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge">Formule</span></div>
+      <div class="formula">cov(A,B) = Somme[(A_i - moyenne A)(B_i - moyenne B)] / (n - 1)</div>
+      <div class="theory-block"><strong>Signe positif</strong> : ils bougent plutot ensemble. <strong>Signe negatif</strong> : l'un amortit plutot l'autre. <strong>Proche de zero</strong> : peu de relation lineaire visible.</div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Decomposition pas a pas</div>
+        <div id="covSteps"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Resultat</div>
+        <div class="grid-2">
+          <div class="stat-box"><span class="stat-val" id="covAB">-</span><span class="stat-lbl">cov(A,B)</span></div>
+          <div class="stat-box"><span class="stat-val" id="corrAB">-</span><span class="stat-lbl">corr(A,B)</span></div>
+        </div>
+        <div class="step"><strong>Idee cle :</strong> la diversification commence ici. Ce n'est pas seulement le risque individuel de chaque actif qui compte, mais aussi leur co-mouvement.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="correlation" class="section">
+    <div class="section-hero">
+      <h1>Correlation</h1>
+      <p>La correlation standardise la covariance et se lit plus facilement, car elle reste comprise entre -1 et +1.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge">Lecture rapide</span></div>
+      <div class="grid-3">
+        <div class="stat-box"><span class="stat-val">+1</span><span class="stat-lbl">meme mouvement</span></div>
+        <div class="stat-box"><span class="stat-val">0</span><span class="stat-lbl">pas de lien lineaire net</span></div>
+        <div class="stat-box"><span class="stat-val">-1</span><span class="stat-lbl">mouvements opposes</span></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Effet sur le risque du portefeuille</div>
+        <div class="control-group">
+          <label>Correlation supposee</label>
+          <div class="range-row"><input id="rhoSlider" type="range" min="-1" max="1" step="0.1" value="0.2"><span class="range-val" id="rhoVal">0.2</span></div>
+        </div>
+        <div class="grid-2">
+          <div class="stat-box"><span class="stat-val" id="portStd">-</span><span class="stat-lbl">risque du portefeuille</span></div>
+          <div class="stat-box"><span class="stat-val" id="portMean">-</span><span class="stat-lbl">moyenne du portefeuille</span></div>
+        </div>
+        <p class="note">Ici, on suppose un portefeuille 50/50 pour isoler l'effet de la correlation.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Comparaison visuelle</div>
+        <div class="chart-wrap short"><canvas id="rhoChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="vision" class="section">
+    <div class="section-hero">
+      <h1>Vision (E,s)</h1>
+      <p>Derniere etape du sas : chaque actif peut etre represente par un point dans un plan rendement-risque. On est alors pret pour le chapitre 2.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Carte simple des actifs</div>
+        <div class="chart-wrap"><canvas id="scatterChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ce qu'il faut retenir avant Markowitz</div>
+        <div class="step"><strong>1.</strong> Un actif se decrit deja par sa moyenne et son risque.</div>
+        <div class="step"><strong>2.</strong> Deux actifs ensemble exigent une information supplementaire : leur correlation.</div>
+        <div class="step"><strong>3.</strong> La diversification peut reduire le risque sans sacrifier autant le rendement qu'on le croit intuitivement.</div>
+        <div class="step"><strong>4.</strong> Le chapitre 2 repartira de ces objets pour construire la logique du portefeuille efficient.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const priceSeries = [100, 104, 102, 107, 109, 111];
+const assetA = [0.020, 0.015, 0.018, 0.022, 0.017, 0.019];
+const assetB = [0.045, -0.010, 0.052, -0.005, 0.040, 0.008];
+const assetC = [0.012, 0.010, 0.014, 0.011, 0.013, 0.009];
+
+function mean(arr){ return arr.reduce((a,b)=>a+b,0) / arr.length; }
+function sampleVariance(arr){
+  const m = mean(arr);
+  return arr.reduce((s,v)=>s + (v - m) ** 2, 0) / (arr.length - 1);
+}
+function sampleStd(arr){ return Math.sqrt(sampleVariance(arr)); }
+function sampleCov(a,b){
+  const ma = mean(a), mb = mean(b);
+  let s = 0;
+  for(let i=0;i<a.length;i++) s += (a[i]-ma)*(b[i]-mb);
+  return s / (a.length - 1);
+}
+function corr(a,b){ return sampleCov(a,b) / (sampleStd(a) * sampleStd(b)); }
+function pct(v){ return (v * 100).toFixed(2) + "%"; }
+
+const sections = [...document.querySelectorAll(".section")];
+const navBtns = [...document.querySelectorAll(".nav-btn")];
+navBtns.forEach(btn => btn.addEventListener("click", () => go(btn.dataset.target)));
+function go(id){
+  sections.forEach(s => s.classList.toggle("active", s.id === id));
+  navBtns.forEach(b => b.classList.toggle("active", b.dataset.target === id));
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function buildRentTable(){
+  const tbody = document.getElementById("rentTable");
+  let html = "";
+  for(let i=1;i<priceSeries.length;i++){
+    const r = (priceSeries[i] - priceSeries[i-1]) / priceSeries[i-1];
+    html += `<tr><td>M${i}</td><td>${priceSeries[i].toFixed(0)}</td><td>${pct(r)}</td></tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+function updateRent(){
+  const p0 = Number(document.getElementById("price0").value);
+  const p1 = Number(document.getElementById("price1").value);
+  const r = (p1 - p0) / p0;
+  document.getElementById("price0v").textContent = p0;
+  document.getElementById("price1v").textContent = p1;
+  document.getElementById("rentPct").textContent = pct(r);
+  document.getElementById("rentGain").textContent = (r * 100 >= 0 ? "+" : "") + (r * 100).toFixed(2);
+}
+
+function fillStats(){
+  document.getElementById("meanA").textContent = pct(mean(assetA));
+  document.getElementById("meanB").textContent = pct(mean(assetB));
+  document.getElementById("varA").textContent = sampleVariance(assetA).toFixed(4);
+  document.getElementById("stdA").textContent = pct(sampleStd(assetA));
+  document.getElementById("varB").textContent = sampleVariance(assetB).toFixed(4);
+  document.getElementById("stdB").textContent = pct(sampleStd(assetB));
+  document.getElementById("covAB").textContent = sampleCov(assetA, assetB).toFixed(4);
+  document.getElementById("corrAB").textContent = corr(assetA, assetB).toFixed(2);
+
+  const ma = mean(assetA), mb = mean(assetB);
+  document.getElementById("covSteps").innerHTML = assetA.map((v,i)=>{
+    const da = v - ma, db = assetB[i] - mb, prod = da * db;
+    return `<div class="step"><strong>Observation ${i+1}</strong><br>A - moyenne = ${da.toFixed(4)} ; B - moyenne = ${db.toFixed(4)} ; produit = ${prod.toFixed(4)}</div>`;
+  }).join("");
+}
+
+let meanChart, riskChart, rhoChart, scatterChart;
+
+function buildCharts(){
+  meanChart = new Chart(document.getElementById("meanChart"), {
+    type: "bar",
+    data: {
+      labels: ["Actif A", "Actif B"],
+      datasets: [{label: "E(R)", data: [mean(assetA)*100, mean(assetB)*100], backgroundColor: ["#06b6d4", "#f59e0b"]}]
+    },
+    options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}}
+  });
+
+  riskChart = new Chart(document.getElementById("riskChart"), {
+    type: "line",
+    data: {
+      labels: ["-3s", "-2s", "-1s", "moy.", "+1s", "+2s", "+3s"],
+      datasets: [
+        {label:"Actif A", data:[0.2,1.2,4.5,7,4.5,1.2,0.2], borderColor:"#06b6d4", backgroundColor:"rgba(6,182,212,.15)", fill:true, tension:.35},
+        {label:"Actif B", data:[0.5,1.7,3.3,4.2,3.3,1.7,0.5], borderColor:"#f59e0b", backgroundColor:"rgba(245,158,11,.12)", fill:true, tension:.35}
+      ]
+    },
+    options: {responsive:true, maintainAspectRatio:false}
+  });
+
+  rhoChart = new Chart(document.getElementById("rhoChart"), {
+    type: "bar",
+    data: {
+      labels: ["s portefeuille"],
+      datasets: [{label:"Risque", data:[0], backgroundColor:"#10b981"}]
+    },
+    options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}}
+  });
+
+  scatterChart = new Chart(document.getElementById("scatterChart"), {
+    type: "scatter",
+    data: {
+      datasets: [{
+        label:"Actifs",
+        data:[
+          {x:sampleStd(assetA)*100, y:mean(assetA)*100, label:"A"},
+          {x:sampleStd(assetB)*100, y:mean(assetB)*100, label:"B"},
+          {x:sampleStd(assetC)*100, y:mean(assetC)*100, label:"C"}
+        ],
+        pointRadius:7,
+        pointBackgroundColor:["#06b6d4","#f59e0b","#10b981"]
+      }]
+    },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      parsing:false,
+      plugins:{
+        tooltip:{
+          callbacks:{
+            label(ctx){ return `${ctx.raw.label} : s=${ctx.raw.x.toFixed(2)}%, E(R)=${ctx.raw.y.toFixed(2)}%`; }
+          }
+        }
+      },
+      scales:{
+        x:{title:{display:true,text:"Risque s (%)"}},
+        y:{title:{display:true,text:"Esperance E(R) (%)"}}
+      }
+    }
+  });
+}
+
+function updatePortfolio(){
+  const rho = Number(document.getElementById("rhoSlider").value);
+  document.getElementById("rhoVal").textContent = rho.toFixed(1);
+  const wa = 0.5, wb = 0.5;
+  const varP = (wa**2)*sampleVariance(assetA) + (wb**2)*sampleVariance(assetB) + 2*wa*wb*rho*sampleStd(assetA)*sampleStd(assetB);
+  const stdP = Math.sqrt(Math.max(varP, 0));
+  const meanP = wa*mean(assetA) + wb*mean(assetB);
+  document.getElementById("portStd").textContent = pct(stdP);
+  document.getElementById("portMean").textContent = pct(meanP);
+  rhoChart.data.datasets[0].data = [stdP * 100];
+  rhoChart.update();
+}
+
+document.getElementById("price0").addEventListener("input", updateRent);
+document.getElementById("price1").addEventListener("input", updateRent);
+document.getElementById("rhoSlider").addEventListener("input", updatePortfolio);
+
+buildRentTable();
+updateRent();
+fillStats();
+buildCharts();
+updatePortfolio();
+</script>
+</body>
+</html>

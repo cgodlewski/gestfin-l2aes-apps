@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Financière — Théorie Financière Interactive</title>
+<script src="../node_modules/chart.js/dist/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --accent: #4f9cf9;
+    --accent2: #f97b4f;
+    --accent3: #63e6a0;
+    --accent4: #f9e44f;
+    --text: #e8ecf4;
+    --text2: #8892a4;
+    --text3: #5a6478;
+    --danger: #f95f5f;
+    --success: #63e6a0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 60px;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .logo span { color: var(--text2); font-size: 0.75rem; font-family: 'IBM Plex Sans', sans-serif; display: block; }
+
+  nav {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    flex: 1;
+  }
+
+  nav::-webkit-scrollbar { height: 2px; }
+  nav::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active {
+    color: var(--accent);
+    background: rgba(79,156,249,0.1);
+    border-color: rgba(79,156,249,0.3);
+  }
+
+  /* MAIN LAYOUT */
+  main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(79,156,249,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(79,156,249,0.3);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .badge.orange { background: rgba(249,123,79,0.15); color: var(--accent2); border-color: rgba(249,123,79,0.3); }
+  .badge.green { background: rgba(99,230,160,0.15); color: var(--accent3); border-color: rgba(99,230,160,0.3); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* INPUTS */
+  .control-group { margin-bottom: 1rem; }
+  .control-group label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text2);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  .range-row { display: flex; align-items: center; gap: 1rem; }
+  .range-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    min-width: 50px;
+    text-align: right;
+    font-weight: 600;
+  }
+
+  input[type="number"], input[type="text"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 0.75rem;
+    border-radius: 5px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  input[type="number"]:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* BUTTONS */
+  .btn {
+    background: rgba(79,156,249,0.15);
+    border: 1px solid rgba(79,156,249,0.4);
+    color: var(--accent);
+    padding: 0.5rem 1.25rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .btn:hover { background: rgba(79,156,249,0.25); }
+  .btn.orange { background: rgba(249,123,79,0.15); border-color: rgba(249,123,79,0.4); color: var(--accent2); }
+  .btn.orange:hover { background: rgba(249,123,79,0.25); }
+  .btn.green { background: rgba(99,230,160,0.15); border-color: rgba(99,230,160,0.4); color: var(--accent3); }
+
+  /* STAT BOXES */
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent);
+    display: block;
+  }
+
+  .stat-lbl {
+    font-size: 0.7rem;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+  }
+
+  /* FORMULA BOX */
+  .formula {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    padding: 0.75rem 1rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent3);
+    border-radius: 0 5px 5px 0;
+    margin: 0.75rem 0;
+    overflow-x: auto;
+  }
+
+  /* THEORY TEXT */
+  .theory-block {
+    background: var(--surface2);
+    border-radius: 7px;
+    padding: 1rem 1.25rem;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: var(--text2);
+    margin-bottom: 1rem;
+  }
+
+  .theory-block strong { color: var(--text); }
+  .theory-block .hl { color: var(--accent); font-family: 'IBM Plex Mono', monospace; }
+  .theory-block .hl2 { color: var(--accent2); }
+  .theory-block .hl3 { color: var(--accent3); }
+
+  /* CANVAS */
+  .chart-wrap {
+    position: relative;
+    height: 340px;
+    width: 100%;
+  }
+
+  /* QUIZ */
+  .quiz-q {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .quiz-opt {
+    display: block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.65rem 1rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+
+  .quiz-opt:hover { border-color: var(--accent); color: var(--text); }
+  .quiz-opt.correct { background: rgba(99,230,160,0.15); border-color: var(--accent3); color: var(--accent3); }
+  .quiz-opt.wrong { background: rgba(249,95,95,0.15); border-color: var(--danger); color: var(--danger); }
+
+  .quiz-feedback {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+    display: none;
+    line-height: 1.5;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: rgba(99,230,160,0.1); border: 1px solid rgba(99,230,160,0.3); color: var(--accent3); }
+  .quiz-feedback.ko { background: rgba(249,95,95,0.1); border: 1px solid rgba(249,95,95,0.3); color: var(--danger); }
+
+  /* SECTION HEADER */
+  .section-hero {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+
+  .section-hero p {
+    font-size: 0.9rem;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th {
+    background: var(--surface2);
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    color: var(--text2);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* TABS */
+  .tab-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.6rem 1.1rem;
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text2);
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* SCORE */
+  .score-counter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text2);
+    margin-left: auto;
+  }
+
+  /* highlight */
+  mark {
+    background: rgba(79,156,249,0.2);
+    color: var(--accent);
+    padding: 0 3px;
+    border-radius: 2px;
+  }
+
+  .note {
+    font-size: 0.75rem;
+    color: var(--text3);
+    font-style: italic;
+    margin-top: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Gestion Financière <span>L2 AES — Théorie Financière</span></div>
+  <nav>
+    <button class="nav-btn active" onclick="showSection('accueil')">🏠 Accueil</button>
+    <button class="nav-btn" onclick="showSection('risque')">📊 Risque &amp; Rentabilité</button>
+    <button class="nav-btn" onclick="showSection('diversification')">🧩 Diversification</button>
+    <button class="nav-btn" onclick="showSection('portefeuille')">📐 Portefeuille 2 actifs</button>
+    <button class="nav-btn" onclick="showSection('frontiere')">🌐 Frontière efficiente</button>
+    <button class="nav-btn" onclick="showSection('beta')">β Bêta</button>
+    <button class="nav-btn" onclick="showSection('medaf')">📈 MEDAF / CAPM</button>
+    <button class="nav-btn" onclick="showSection('exercices')">✏️ Exercices</button>
+    <button class="nav-btn" onclick="showSection('quiz')">🎯 Quiz</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ACCUEIL -->
+<div id="accueil" class="section active">
+  <div class="section-hero">
+    <h1>Théorie Financière</h1>
+    <p>Application interactive couvrant la théorie du portefeuille de Markowitz, la décomposition du risque, le bêta et le MEDAF. Cours de Prof. C.J. Godlewski.</p>
+  </div>
+  <div class="grid-3">
+    <div class="card" style="cursor:pointer" onclick="showSection('risque')">
+      <div class="card-title"><span class="badge">01</span> Risque &amp; Rentabilité</div>
+      <div class="theory-block">Actifs sans risque vs actifs risqués. Prime de risque. Lien rendement-risque. Attitudes des investisseurs.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="showSection('diversification')">
+      <div class="card-title"><span class="badge">02</span> Diversification</div>
+      <div class="theory-block">Réduction du risque par combinaison d'actifs. Risque spécifique vs risque de marché. Effet du nombre de titres.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="showSection('portefeuille')">
+      <div class="card-title"><span class="badge orange">03</span> Portefeuille 2 actifs</div>
+      <div class="theory-block">Construction interactive d'un portefeuille à deux actifs. Impact de la corrélation sur le risque. Poids optimal.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="showSection('frontiere')">
+      <div class="card-title"><span class="badge orange">04</span> Frontière efficiente</div>
+      <div class="theory-block">Ensemble des portefeuilles optimaux de Markowitz. Visualisation interactive de la frontière dans l'espace E-σ.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="showSection('beta')">
+      <div class="card-title"><span class="badge green">05</span> Bêta</div>
+      <div class="theory-block">Mesure du risque systématique. Calcul par régression. Interprétation. Facteurs explicatifs du bêta.</div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="showSection('medaf')">
+      <div class="card-title"><span class="badge green">06</span> MEDAF / CAPM</div>
+      <div class="theory-block">Droite de marché des titres (SML). Évaluation de la rentabilité exigée. Titres sur/sous-évalués.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Concepts clés</div>
+    <div class="grid-3">
+      <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">H. Markowitz</span><span class="stat-lbl">Nobel 1990 — Théorie du portefeuille</span></div>
+      <div class="stat-box"><span class="stat-val" style="font-size:1rem">E(R) = Rf + β·[E(Rm)−Rf]</span><span class="stat-lbl">Équation du MEDAF</span></div>
+      <div class="stat-box"><span class="stat-val" style="color:var(--accent2)">≥ 30 titres</span><span class="stat-lbl">Pour diversification efficace</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- RISQUE & RENTABILITE -->
+<div id="risque" class="section">
+  <div class="section-hero">
+    <h1>Risque &amp; Rentabilité</h1>
+    <p>Comprendre la relation fondamentale entre risque supporté et rentabilité exigée.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Actifs</span> Sans risque vs Risqués</div>
+      <div class="theory-block">
+        <strong>Actif sans risque :</strong> rentabilité certaine, remboursement garanti. Ex. : obligations d'État à taux fixe.<br><br>
+        <strong>Actif risqué :</strong> flux futurs <em>incertains</em>. La rentabilité peut fluctuer selon les nouvelles informations. Ex. : actions.<br><br>
+        La décomposition fondamentale : <span class="hl">E(R) = Rf + prime de risque</span><br>
+        La <span class="hl2">prime de risque</span> est le supplément de rentabilité exigé en compensation du risque supporté.
+      </div>
+      <div class="formula">E(R_actif) = Rf + [E(Rm) − Rf] × β</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Simulateur</span> Prime de risque</div>
+      <div class="control-group">
+        <label>Taux sans risque Rf (%)</label>
+        <div class="range-row">
+          <input type="range" id="rf" min="0" max="8" step="0.1" value="2" oninput="updateRisque()">
+          <span class="range-val" id="rfVal">2.0%</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Prime de risque de marché E(Rm)−Rf (%)</label>
+        <div class="range-row">
+          <input type="range" id="prm" min="0" max="12" step="0.1" value="5" oninput="updateRisque()">
+          <span class="range-val" id="prmVal">5.0%</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Bêta de l'action (β)</label>
+        <div class="range-row">
+          <input type="range" id="betaR" min="0" max="2.5" step="0.05" value="1" oninput="updateRisque()">
+          <span class="range-val" id="betaRVal">1.00</span>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:1rem">
+        <div class="stat-box"><span class="stat-val" id="erVal">7.0%</span><span class="stat-lbl">E(R) action</span></div>
+        <div class="stat-box"><span class="stat-val" id="prVal">5.0%</span><span class="stat-lbl">Prime de risque</span></div>
+        <div class="stat-box"><span class="stat-val" id="rfStatVal">2.0%</span><span class="stat-lbl">Taux sans risque</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Attitudes face au risque</div>
+    <div class="grid-3">
+      <div class="stat-box">
+        <div style="font-size:2rem;margin-bottom:0.5rem">😰</div>
+        <span class="stat-val" style="font-size:1rem;color:var(--accent3)">Riscophobe</span>
+        <span class="stat-lbl">Aversion au risque — préfère faible risque et faible rentabilité</span>
+      </div>
+      <div class="stat-box">
+        <div style="font-size:2rem;margin-bottom:0.5rem">😐</div>
+        <span class="stat-val" style="font-size:1rem;color:var(--accent4)">Neutre</span>
+        <span class="stat-lbl">Indifférent au risque — rentabilité espérée seule compte</span>
+      </div>
+      <div class="stat-box">
+        <div style="font-size:2rem;margin-bottom:0.5rem">😎</div>
+        <span class="stat-val" style="font-size:1rem;color:var(--accent2)">Riscophile</span>
+        <span class="stat-lbl">Attrait pour le risque — cherche rentabilité max, accepte risque élevé</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Rentabilité d'une action</div>
+    <div class="theory-block">
+      La rentabilité d'une action sur une période se calcule :<br>
+      <span class="hl">R_t = (P_t − P_{t−1} + D_t) / P_{t−1}</span><br><br>
+      En pratique, <strong>l'essentiel de la rentabilité provient des fluctuations du cours</strong>. Les dividendes D_t sont souvent négligés pour les calculs de rentabilité à court terme.<br><br>
+      Les anticipations des investisseurs (résultats, perspectives économiques) → modification des prévisions → modification de la valeur de l'action.
+    </div>
+    <div class="formula">Rentabilité logarithmique : r_t = ln(P_t / P_{t−1})</div>
+    <p class="note">La rentabilité logarithmique est préférable pour les analyses économétriques car elle est additive dans le temps.</p>
+  </div>
+</div>
+
+<!-- DIVERSIFICATION -->
+<div id="diversification" class="section">
+  <div class="section-hero">
+    <h1>Diversification du risque</h1>
+    <p>La diversification permet d'éliminer le risque spécifique, mais pas le risque de marché.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Théorie</span> Décomposition du risque</div>
+      <div class="theory-block">
+        Le risque total d'un titre se décompose en deux parties :<br><br>
+        <span class="hl">Risque total = Risque de marché + Risque spécifique</span><br><br>
+        <strong>Risque de marché (systématique) :</strong> lié aux facteurs macroéconomiques. <span class="hl2">Non diversifiable.</span> Mesuré par le bêta.<br><br>
+        <strong>Risque spécifique (idiosyncratique) :</strong> propre à l'entreprise (qualité du management, technologie…). <span class="hl3">Diversifiable.</span><br><br>
+        ✅ Seul le risque non diversifiable donne droit à une rémunération par le marché.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Simulateur</span> Effet du nombre de titres</div>
+      <div class="control-group">
+        <label>Nombre de titres en portefeuille</label>
+        <div class="range-row">
+          <input type="range" id="nTitres" min="1" max="60" step="1" value="1" oninput="updateDiverChart()">
+          <span class="range-val" id="nTitresVal">1</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Risque moyen d'un titre (%)</label>
+        <div class="range-row">
+          <input type="range" id="sigmaAvg" min="10" max="50" step="1" value="30" oninput="updateDiverChart()">
+          <span class="range-val" id="sigmaAvgVal">30%</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Risque de marché résiduel (%)</label>
+        <div class="range-row">
+          <input type="range" id="sigmaMarket" min="5" max="25" step="1" value="15" oninput="updateDiverChart()">
+          <span class="range-val" id="sigmaMarketVal">15%</span>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:1rem">
+        <div class="stat-box"><span class="stat-val" id="divRisqueVal">30.0%</span><span class="stat-lbl">Risque du portefeuille</span></div>
+        <div class="stat-box"><span class="stat-val" id="divReductionVal">0%</span><span class="stat-lbl">Réduction vs 1 titre</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Effet de la diversification</div>
+    <div class="chart-wrap">
+      <canvas id="diversificationChart"></canvas>
+    </div>
+    <p class="note" style="margin-top:0.5rem">📌 La zone verte représente le risque spécifique éliminable. La ligne rouge représente le plancher de risque de marché (non diversifiable). À partir de ~30 titres, la réduction est quasi-totale.</p>
+  </div>
+</div>
+
+<!-- PORTEFEUILLE 2 ACTIFS -->
+<div id="portefeuille" class="section">
+  <div class="section-hero">
+    <h1>Portefeuille à deux actifs</h1>
+    <p>Construction et optimisation d'un portefeuille combinant deux actifs risqués.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge">Formules</span> Espérance et variance</div>
+    <div class="grid-2">
+      <div>
+        <div class="formula">E(Rp) = w·E(R₁) + (1−w)·E(R₂)</div>
+        <div class="formula">V(Rp) = w²σ₁² + (1−w)²σ₂² + 2ρw(1−w)σ₁σ₂</div>
+      </div>
+      <div class="theory-block">
+        <strong>w</strong> = poids du titre 1 dans le portefeuille<br>
+        <strong>σ₁, σ₂</strong> = écarts-types des rentabilités<br>
+        <strong>ρ</strong> = coefficient de corrélation (−1 ≤ ρ ≤ +1)<br><br>
+        La corrélation est la clé : <span class="hl3">plus ρ est faible, plus la diversification est efficace</span>.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Paramètres des actifs</div>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--accent);font-size:0.8rem;font-weight:600;margin-bottom:0.75rem">ACTIF 1</p>
+          <div class="control-group">
+            <label>E(R₁) (%)</label>
+            <div class="range-row">
+              <input type="range" id="er1" min="1" max="25" step="0.5" value="8" oninput="updatePortfolio()">
+              <span class="range-val" id="er1Val">8.0%</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label>σ₁ (%)</label>
+            <div class="range-row">
+              <input type="range" id="sig1" min="5" max="60" step="0.5" value="20" oninput="updatePortfolio()">
+              <span class="range-val" id="sig1Val">20%</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p style="color:var(--accent2);font-size:0.8rem;font-weight:600;margin-bottom:0.75rem">ACTIF 2</p>
+          <div class="control-group">
+            <label>E(R₂) (%)</label>
+            <div class="range-row">
+              <input type="range" id="er2" min="1" max="25" step="0.5" value="12" oninput="updatePortfolio()">
+              <span class="range-val" id="er2Val">12.0%</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label>σ₂ (%)</label>
+            <div class="range-row">
+              <input type="range" id="sig2" min="5" max="60" step="0.5" value="30" oninput="updatePortfolio()">
+              <span class="range-val" id="sig2Val">30%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Corrélation ρ</label>
+        <div class="range-row">
+          <input type="range" id="rho" min="-1" max="1" step="0.05" value="0.3" oninput="updatePortfolio()">
+          <span class="range-val" id="rhoVal">0.30</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Poids w (actif 1)</label>
+        <div class="range-row">
+          <input type="range" id="weight" min="0" max="1" step="0.01" value="0.5" oninput="updatePortfolio()">
+          <span class="range-val" id="weightVal">50%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Résultats du portefeuille</div>
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="stat-box"><span class="stat-val" id="pfER">10.0%</span><span class="stat-lbl">E(Rp)</span></div>
+        <div class="stat-box"><span class="stat-val" id="pfSig">22.2%</span><span class="stat-lbl">σ(Rp)</span></div>
+        <div class="stat-box"><span class="stat-val" id="pfVar">4.93%</span><span class="stat-lbl">V(Rp)</span></div>
+        <div class="stat-box"><span class="stat-val" id="pfWStar">—</span><span class="stat-lbl">w* (variance min)</span></div>
+      </div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="pfChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Courbe risque-rendement pour ρ variable</div>
+    <div class="chart-wrap" style="height:300px">
+      <canvas id="pfRhoChart"></canvas>
+    </div>
+    <p class="note">Chaque courbe correspond à un niveau de corrélation différent. Plus ρ est faible (voire négatif), plus la courbe se déplace vers la gauche : meilleure diversification.</p>
+  </div>
+</div>
+
+<!-- FRONTIERE EFFICIENTE -->
+<div id="frontiere" class="section">
+  <div class="section-hero">
+    <h1>Frontière efficiente</h1>
+    <p>Travaux de Markowitz (Nobel 1990) — représentation des portefeuilles optimaux dans l'espace (σ, E(R)).</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Théorie</span> Hypothèses de Markowitz</div>
+      <div class="theory-block">
+        <strong>1. Efficience informationnelle</strong> : les cours reflètent toute l'information disponible.<br><br>
+        <strong>2. Rationalité</strong> : les investisseurs sont rationnels et averses au risque.<br><br>
+        <strong>3. Normalité</strong> : la rentabilité de chaque actif suit une <span class="hl">loi Normale</span>. Les actifs/portefeuilles sont représentés par leurs <strong>E</strong> (espérance) et <strong>V</strong> (variance).<br><br>
+        <strong>Critère E-V :</strong> Un portefeuille A domine B si E(R_A) ≥ E(R_B) ET σ(A) ≤ σ(B) (au moins une inégalité stricte).
+      </div>
+      <div class="theory-block" style="margin-top:0.5rem">
+        <strong>Critiques :</strong> Les distributions financières réelles ont des queues épaisses (<span class="hl2">leptokurtose</span>), sous-estimant les événements extrêmes (crises, krachs). L'hypothèse de normalité est discutable.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Paramètres</span> N actifs</div>
+      <div class="control-group">
+        <label>Corrélation moyenne entre actifs</label>
+        <div class="range-row">
+          <input type="range" id="fronRho" min="-0.5" max="0.99" step="0.05" value="0.3" oninput="updateFrontiere()">
+          <span class="range-val" id="fronRhoVal">0.30</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Inclure actif sans risque Rf (%)</label>
+        <div class="range-row">
+          <input type="range" id="fronRf" min="0" max="6" step="0.1" value="2" oninput="updateFrontiere()">
+          <span class="range-val" id="fronRfVal">2.0%</span>
+        </div>
+      </div>
+      <div class="theory-block" style="margin-top:0.75rem">
+        La <span class="hl">droite du marché de capitaux (CML)</span> relie l'actif sans risque au portefeuille tangent, dominant tous les autres portefeuilles en termes d'efficience.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Frontière efficiente dans l'espace (σ, E(R))</div>
+    <div class="chart-wrap" style="height:380px">
+      <canvas id="frontiereChart"></canvas>
+    </div>
+    <p class="note">🔵 Portefeuilles inefficients (dominés) &nbsp;|&nbsp; 🟢 Frontière efficiente &nbsp;|&nbsp; ⭐ Portefeuille à variance minimale &nbsp;|&nbsp; 🔺 Portefeuille tangent &nbsp;|&nbsp; — Droite du marché de capitaux (CML)</p>
+  </div>
+</div>
+
+<!-- BETA -->
+<div id="beta" class="section">
+  <div class="section-hero">
+    <h1>Le bêta — mesure du risque systématique</h1>
+    <p>Le bêta quantifie la sensibilité d'un titre aux mouvements du marché.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge">Définition</span> Calcul du bêta</div>
+      <div class="formula">β_i = Cov(R_i, R_m) / Var(R_m) = ρ_{i,m} × (σ_i / σ_m)</div>
+      <div class="theory-block" style="margin-top:0.75rem">
+        <strong>Interprétation :</strong><br>
+        <span class="hl">β = 1</span> : le titre suit exactement le marché<br>
+        <span class="hl">β > 1</span> : titre <em>agressif</em>, amplifie les mouvements du marché<br>
+        <span class="hl">β &lt; 1</span> : titre <em>défensif</em>, moins sensible que le marché<br>
+        <span class="hl">β &lt; 0</span> : titre contra-cyclique (rare)<br><br>
+        <strong>Facteurs explicatifs :</strong>
+        <ul style="margin-top:0.5rem;padding-left:1.2rem;line-height:1.8">
+          <li>Sensibilité sectorielle à la conjoncture</li>
+          <li>Structure des coûts (coûts fixes → point mort élevé)</li>
+          <li>Structure financière (effet levier)</li>
+          <li>Visibilité des performances</li>
+          <li>Taux de croissance des résultats</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Simulateur</span> Régression bêta</div>
+      <div class="control-group">
+        <label>Bêta réel de l'action</label>
+        <div class="range-row">
+          <input type="range" id="betaTrue" min="0.1" max="2.5" step="0.05" value="1.2" oninput="updateBetaChart()">
+          <span class="range-val" id="betaTrueVal">1.20</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Volatilité marché σm (%)</label>
+        <div class="range-row">
+          <input type="range" id="sigmaM" min="5" max="25" step="1" value="15" oninput="updateBetaChart()">
+          <span class="range-val" id="sigmaMVal">15%</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Bruit idiosyncratique</label>
+        <div class="range-row">
+          <input type="range" id="noiseB" min="0" max="30" step="1" value="10" oninput="updateBetaChart()">
+          <span class="range-val" id="noiseBVal">10%</span>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:1rem">
+        <div class="stat-box"><span class="stat-val" id="betaEstVal">1.20</span><span class="stat-lbl">β estimé</span></div>
+        <div class="stat-box"><span class="stat-val" id="r2Val">—</span><span class="stat-lbl">R²</span></div>
+        <div class="stat-box"><span class="stat-val" id="alphaVal">—</span><span class="stat-lbl">α (Jensen)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Régression : R_i = α + β·R_m + ε</div>
+    <div class="chart-wrap" style="height:320px">
+      <canvas id="betaChart"></canvas>
+    </div>
+    <p class="note">Chaque point représente une observation (R_m, R_i). La droite de régression donne le bêta (pente) et l'alpha (ordonnée à l'origine).</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bêtas types — CAC 40 (illustration)</div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('betaTab','cycliques')">Secteurs cycliques</button>
+      <button class="tab-btn" onclick="showTab('betaTab','defensifs')">Secteurs défensifs</button>
+    </div>
+    <div id="betaTab-cycliques" class="tab-pane active">
+      <table>
+        <thead><tr><th>Titre</th><th>Secteur</th><th>Bêta estimé</th><th>Interprétation</th></tr></thead>
+        <tbody>
+          <tr><td>Stellantis</td><td>Automobile</td><td style="color:var(--accent2)">1.55</td><td>Agressif — très sensible au cycle</td></tr>
+          <tr><td>ArcelorMittal</td><td>Acier</td><td style="color:var(--accent2)">1.48</td><td>Fortement cyclique</td></tr>
+          <tr><td>LVMH</td><td>Luxe</td><td style="color:var(--accent)">1.20</td><td>Légèrement agressif</td></tr>
+          <tr><td>BNP Paribas</td><td>Banque</td><td style="color:var(--accent2)">1.35</td><td>Sensible aux taux et crises</td></tr>
+          <tr><td>Saint-Gobain</td><td>Matériaux</td><td style="color:var(--accent)">1.15</td><td>Légèrement agressif</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="betaTab-defensifs" class="tab-pane">
+      <table>
+        <thead><tr><th>Titre</th><th>Secteur</th><th>Bêta estimé</th><th>Interprétation</th></tr></thead>
+        <tbody>
+          <tr><td>Orange</td><td>Télécoms</td><td style="color:var(--accent3)">0.45</td><td>Très défensif</td></tr>
+          <tr><td>Essilor</td><td>Santé</td><td style="color:var(--accent3)">0.60</td><td>Défensif</td></tr>
+          <tr><td>Danone</td><td>Agroalimentaire</td><td style="color:var(--accent3)">0.55</td><td>Défensif — conso. stable</td></tr>
+          <tr><td>EDF</td><td>Énergie</td><td style="color:var(--accent3)">0.70</td><td>Faible sensibilité marché</td></tr>
+          <tr><td>Sanofi</td><td>Pharma</td><td style="color:var(--accent3)">0.65</td><td>Défensif</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MEDAF -->
+<div id="medaf" class="section">
+  <div class="section-hero">
+    <h1>MEDAF — Modèle d'Évaluation Des Actifs Financiers</h1>
+    <p>Le CAPM établit la relation entre risque systématique (β) et rentabilité exigée.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge">Équation fondamentale</span></div>
+    <div class="formula" style="font-size:1.05rem;padding:1rem 1.25rem">
+      E(R_i) = Rf + β_i × [E(R_m) − Rf]
+    </div>
+    <div class="grid-3" style="margin-top:1rem">
+      <div class="theory-block"><span class="hl">Rf</span> = taux sans risque (OAT 10 ans par ex.)</div>
+      <div class="theory-block"><span class="hl">β_i</span> = bêta du titre i (risque systématique)</div>
+      <div class="theory-block"><span class="hl">[E(Rm)−Rf]</span> = prime de risque de marché</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Paramètres SML</span></div>
+      <div class="control-group">
+        <label>Taux sans risque Rf (%)</label>
+        <div class="range-row">
+          <input type="range" id="medafRf" min="0" max="8" step="0.1" value="2" oninput="updateMEDAF()">
+          <span class="range-val" id="medafRfVal">2.0%</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>E(Rm) — Rentabilité du marché (%)</label>
+        <div class="range-row">
+          <input type="range" id="medafEm" min="4" max="20" step="0.5" value="9" oninput="updateMEDAF()">
+          <span class="range-val" id="medafEmVal">9.0%</span>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:1rem 0;padding-top:1rem">
+        <p style="font-size:0.75rem;color:var(--text2);margin-bottom:0.75rem;font-weight:600;text-transform:uppercase">Ajouter un titre</p>
+        <div class="grid-2" style="gap:0.75rem">
+          <div class="control-group">
+            <label>Bêta du titre</label>
+            <div class="range-row">
+              <input type="range" id="medafBeta" min="0" max="2.5" step="0.05" value="1.2" oninput="updateMEDAF()">
+              <span class="range-val" id="medafBetaVal">1.20</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label>Rentabilité observée (%)</label>
+            <div class="range-row">
+              <input type="range" id="medafRobs" min="-5" max="25" step="0.5" value="11" oninput="updateMEDAF()">
+              <span class="range-val" id="medafRobsVal">11.0%</span>
+            </div>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:0.75rem">
+          <div class="stat-box"><span class="stat-val" id="medafER">8.0%</span><span class="stat-lbl">E(R) MEDAF</span></div>
+          <div class="stat-box"><span class="stat-val" id="medafAlpha">+0.0%</span><span class="stat-lbl">Alpha de Jensen</span></div>
+          <div class="stat-box" id="medafEvalBox"><span class="stat-val" id="medafEval">⚖️ Équilibré</span><span class="stat-lbl">Évaluation</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Droite de marché des titres (SML)</div>
+      <div class="chart-wrap" style="height:320px">
+        <canvas id="medafChart"></canvas>
+      </div>
+      <p class="note">Les titres au-dessus de la SML sont <span style="color:var(--accent3)">sous-évalués</span> (α > 0). Ceux en dessous sont <span style="color:var(--danger)">sur-évalués</span> (α &lt; 0).</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tableau de rentabilités exigées</div>
+    <table id="medafTable">
+      <thead><tr><th>Titre / β</th><th>β</th><th>E(R) MEDAF</th><th>Prime de risque</th></tr></thead>
+      <tbody id="medafTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Recul critique</span> Limites empiriques du MEDAF</div>
+      <div class="theory-block">
+        <strong>Le MEDAF reste un cadre simple et utile</strong>, mais il ne decrit pas parfaitement les rendements observes sur les marches.<br><br>
+        <strong>1.</strong> Le <span class="hl">beta</span> n'explique pas toujours a lui seul les differences de rentabilite entre titres.<br><br>
+        <strong>2.</strong> Le <span class="hl2">portefeuille de marche complet</span> n'est pas observable directement en pratique.<br><br>
+        <strong>3.</strong> Les hypotheses du modele sont fortes : marches parfaits, emprunt/pret au taux sans risque, comportement homogene des investisseurs.<br><br>
+        <strong>En pratique :</strong> on garde surtout le MEDAF comme <span class="hl3">outil de calcul de la rentabilite exigee</span> sur les capitaux propres.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="badge green">Ouverture</span> Pourquoi ce modele compte dans le cours</div>
+      <div class="theory-block">
+        Dans ce chapitre, le MEDAF donne une <strong>rentabilite exigee sur les capitaux propres</strong> a partir de <span class="hl">Rf</span>, de la prime de marche et du <span class="hl">beta</span>.<br><br>
+        Cette rentabilite exigee servira ensuite dans le chapitre 3 a construire le <strong>cout des capitaux propres</strong>, puis le <strong>CMPC</strong> avec la dette.<br><br>
+        Il ne s'agit donc pas d'un modele isole : c'est le <span class="hl3">pont entre le risque et le cout du capital</span>.
+      </div>
+      <p class="note">On reste ici dans le chapitre 2 : l'application du CMPC et de la VAN sera traitee dans les applis des chapitres suivants.</p>
+    </div>
+  </div>
+
+<!-- EXERCICES -->
+<div id="exercices" class="section">
+  <div class="section-hero">
+    <h1>Exercices guidés</h1>
+    <p>Exercices tirés des TD — solutions pas à pas.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('exTab','ex1')">Ex.1 — Portefeuille 2 actifs</button>
+    <button class="tab-btn" onclick="showTab('exTab','ex2')">Ex.2 — Variance min.</button>
+    <button class="tab-btn" onclick="showTab('exTab','ex3')">Ex.3 — Bêta Accor</button>
+    <button class="tab-btn" onclick="showTab('exTab','ex4')">Ex.4 — MEDAF</button>
+  </div>
+
+  <!-- EX 1 -->
+  <div id="exTab-ex1" class="tab-pane active">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Portefeuille Orange / Legrand</div>
+      <div class="theory-block">
+        On dispose des données journalières de deux actions du CAC 40 : <strong>Orange (ORA)</strong> et <strong>Legrand (LR)</strong> sur l'année 2024.<br><br>
+        Calculer l'espérance de rentabilité, l'écart-type et la variance du portefeuille pour différents poids w investis en Orange, avec un coefficient de corrélation estimé à <strong>ρ = 0.369</strong>.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Données numériques</span></div>
+      <div class="grid-2">
+        <div>
+          <table>
+            <thead><tr><th>Paramètre</th><th>Orange</th><th>Legrand</th></tr></thead>
+            <tbody>
+              <tr><td>E(R) annualisé</td><td>~3.5%</td><td>~8.2%</td></tr>
+              <tr><td>σ (annualisé)</td><td><mark>45.25%</mark></td><td><mark>48.72%</mark></td></tr>
+              <tr><td>σ² (variance)</td><td>0.2047</td><td>0.2373</td></tr>
+              <tr><td>ρ (corrélation)</td><td colspan="2" style="text-align:center"><mark>0.369</mark></td></tr>
+              <tr><td>2ρσ₁σ₂</td><td colspan="2" style="text-align:center">0.1626</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="theory-block">
+          <strong>Rappel formule :</strong><br>
+          <span class="hl">Vp = w²·σ₁² + (1−w)²·σ₂² + 2ρw(1−w)σ₁σ₂</span><br><br>
+          Avec σ₁ = 0.4525, σ₂ = 0.4872, ρ = 0.369 :<br>
+          <span class="hl2">Vp = w²·0.2047 + (1−w)²·0.2373 + w(1−w)·0.1626</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge green">Calculateur interactif</span></div>
+      <div class="control-group">
+        <label>Poids w investis en Orange</label>
+        <div class="range-row">
+          <input type="range" id="ex1w" min="0" max="1" step="0.01" value="0.5" oninput="updateEx1()">
+          <span class="range-val" id="ex1wVal">50%</span>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="stat-box"><span class="stat-val" id="ex1Vp">0.2103</span><span class="stat-lbl">Variance Vp</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex1Sig">45.86%</span><span class="stat-lbl">σ(Rp)</span></div>
+        <div class="stat-box"><span class="stat-val" id="ex1Wstar">55.83%</span><span class="stat-lbl">w* (variance min)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EX 2 -->
+  <div id="exTab-ex2" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Portefeuille à variance minimale</div>
+      <div class="theory-block">
+        Reprenant les données Orange/Legrand, calculer le poids optimal w* qui <strong>minimise la variance</strong> du portefeuille, puis calculer la variance et l'écart-type minimaux.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Solution pas à pas</span></div>
+      <div class="theory-block">
+        <strong>Étape 1 :</strong> Écrire la variance en fonction de w :<br>
+        <span class="hl">Vp = w²·0.2794 − w·0.312 + 0.2373</span><br><br>
+        (en développant et regroupant les termes)<br><br>
+        <strong>Étape 2 :</strong> Dériver et annuler :<br>
+        <span class="hl">∂Vp/∂w = 2·0.2794·w − 0.312 = 0</span><br><br>
+        <strong>Étape 3 :</strong> Résoudre :<br>
+        <span class="hl">w* = 0.312 / 0.5588 = <mark>0.5583</mark></span><br><br>
+        <strong>Étape 4 :</strong> Calculer Vp* et σp* :<br>
+        <span class="hl">Vp* = 0.5583²·0.2794 − 0.5583·0.312 + 0.2373 = <mark>0.1501</mark></span><br>
+        <span class="hl">σp* = √0.1501 = <mark>38.74%</mark></span>
+      </div>
+      <div class="formula">Formule générale : w* = (σ₂² − ρσ₁σ₂) / (σ₁² + σ₂² − 2ρσ₁σ₂)</div>
+      <div class="grid-3" style="margin-top:1rem">
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">55.83%</span><span class="stat-lbl">w* Orange</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">44.17%</span><span class="stat-lbl">(1−w*) Legrand</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">38.74%</span><span class="stat-lbl">σ* minimale</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EX 3 -->
+  <div id="exTab-ex3" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Calcul du bêta d'Accor</div>
+      <div class="theory-block">
+        On dispose de 254 observations journalières des rentabilités d'<strong>Accor (XPAR:AC)</strong> et du <strong>CAC 40</strong> sur 2023. Calculer le bêta d'Accor par deux méthodes.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Méthode 1</span> Formule directe</div>
+      <div class="formula">β = Cov(R_Accor, R_CAC40) / Var(R_CAC40)</div>
+      <div class="theory-block">
+        Sous Excel/Stata : <span class="hl">= COVARIANCE.S(Ri, Rm) / VAR.S(Rm)</span><br><br>
+        Résultat obtenu : <strong>β_Accor ≈ 0.593</strong><br><br>
+        Interprétation : quand le CAC 40 progresse de 1%, Accor progresse de <mark>0.593%</mark> en moyenne → titre <span class="hl3">défensif</span>.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Méthode 2</span> Régression OLS</div>
+      <div class="formula">R_Accor,t = α + β · R_CAC40,t + ε_t</div>
+      <div class="theory-block">
+        Résultats de la régression :<br><br>
+        <span class="hl">β = 0.593</span> (pente) — identique à la méthode directe ✅<br>
+        <span class="hl">R² = 0.352</span> — le marché explique 35.2% de la variance d'Accor<br>
+        <span class="hl">F = 136.7</span>, p-valeur ≈ 0 → régression hautement significative<br>
+        <strong>N = 254</strong> observations<br><br>
+        Le reste (1 − R² = 64.8%) correspond au <span class="hl2">risque spécifique d'Accor</span>.
+      </div>
+      <div class="grid-3" style="margin-top:0.75rem">
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent3)">0.593</span><span class="stat-lbl">β Accor</span></div>
+        <div class="stat-box"><span class="stat-val">35.2%</span><span class="stat-lbl">R² (risque marché)</span></div>
+        <div class="stat-box"><span class="stat-val" style="color:var(--accent2)">64.8%</span><span class="stat-lbl">Risque spécifique</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EX 4 -->
+  <div id="exTab-ex4" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><span class="badge">Énoncé</span> Application du MEDAF</div>
+      <div class="theory-block">
+        Données : Rf = 2%, E(Rm) = 9%. Pour les titres suivants, calculer la rentabilité exigée par le MEDAF et évaluer si le titre est bien valorisé.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="badge orange">Calculateur MEDAF</span></div>
+      <div style="margin-bottom:1rem">
+        <div class="range-row" style="gap:1rem;margin-bottom:0.75rem">
+          <span style="font-size:0.8rem;color:var(--text2);min-width:80px">Rf (%)</span>
+          <input type="range" id="ex4Rf" min="0" max="6" step="0.1" value="2" oninput="updateEx4()">
+          <span class="range-val" id="ex4RfV">2.0%</span>
+        </div>
+        <div class="range-row" style="gap:1rem">
+          <span style="font-size:0.8rem;color:var(--text2);min-width:80px">E(Rm) (%)</span>
+          <input type="range" id="ex4Em" min="5" max="20" step="0.5" value="9" oninput="updateEx4()">
+          <span class="range-val" id="ex4EmV">9.0%</span>
+        </div>
+      </div>
+      <table id="ex4Table">
+        <thead><tr><th>Titre</th><th>β</th><th>R observé</th><th>E(R) MEDAF</th><th>Alpha</th><th>Évaluation</th></tr></thead>
+        <tbody>
+          <tr><td>Accor</td><td>0.59</td><td>6.5%</td><td id="ex4r1">—</td><td id="ex4a1">—</td><td id="ex4e1">—</td></tr>
+          <tr><td>BNP</td><td>1.35</td><td>12.0%</td><td id="ex4r2">—</td><td id="ex4a2">—</td><td id="ex4e2">—</td></tr>
+          <tr><td>Orange</td><td>0.45</td><td>3.2%</td><td id="ex4r3">—</td><td id="ex4a3">—</td><td id="ex4e3">—</td></tr>
+          <tr><td>LVMH</td><td>1.20</td><td>15.0%</td><td id="ex4r4">—</td><td id="ex4a4">—</td><td id="ex4e4">—</td></tr>
+          <tr><td>Sanofi</td><td>0.65</td><td>4.0%</td><td id="ex4r5">—</td><td id="ex4a5">—</td><td id="ex4e5">—</td></tr>
+        </tbody>
+      </table>
+      <p class="note" style="margin-top:0.75rem">Alpha > 0 : sous-évalué (rentabilité observée > MEDAF) | Alpha &lt; 0 : sur-évalué | Alpha = 0 : à l'équilibre</p>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="section">
+  <div class="section-hero" style="display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <h1>Quiz — Auto-évaluation</h1>
+      <p>Testez vos connaissances sur la théorie du portefeuille, le bêta et le MEDAF.</p>
+    </div>
+    <div class="score-counter">Score : <span id="quizScore" style="color:var(--accent);font-size:1.1rem;font-weight:600">0</span> / <span id="quizTotal">10</span></div>
+  </div>
+  <div id="quizContainer"></div>
+  <div style="text-align:center;margin-top:1rem">
+    <button class="btn" onclick="resetQuiz()">🔄 Recommencer</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  btns.forEach(b => { if (b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
+}
+
+function showTab(group, id) {
+  const prefix = group + '-';
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(prefix + id).classList.add('active');
+  // find tab buttons
+  const parent = document.getElementById(prefix + id).closest('.section, .card');
+  if (parent) parent.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.remove('active');
+    if (b.getAttribute('onclick').includes(id)) b.classList.add('active');
+  });
+}
+
+// ============================================================
+// CHARTS REGISTRY
+// ============================================================
+const charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+const CHART_DEFAULTS = {
+  color: '#8892a4',
+  borderColor: '#252a38',
+  gridColor: 'rgba(37,42,56,0.8)',
+};
+
+function baseOptions(xLabel='', yLabel='') {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: { duration: 400 },
+    plugins: {
+      legend: { labels: { color: '#8892a4', font: { family: "'IBM Plex Sans'" } } },
+      tooltip: { backgroundColor: '#13161e', borderColor: '#252a38', borderWidth: 1, titleColor: '#e8ecf4', bodyColor: '#8892a4' }
+    },
+    scales: {
+      x: {
+        title: { display: !!xLabel, text: xLabel, color: '#8892a4' },
+        grid: { color: 'rgba(37,42,56,0.8)' },
+        ticks: { color: '#8892a4' }
+      },
+      y: {
+        title: { display: !!yLabel, text: yLabel, color: '#8892a4' },
+        grid: { color: 'rgba(37,42,56,0.8)' },
+        ticks: { color: '#8892a4' }
+      }
+    }
+  };
+}
+
+// ============================================================
+// RISQUE SECTION
+// ============================================================
+function updateRisque() {
+  const rf = +document.getElementById('rf').value;
+  const prm = +document.getElementById('prm').value;
+  const beta = +document.getElementById('betaR').value;
+  document.getElementById('rfVal').textContent = rf.toFixed(1) + '%';
+  document.getElementById('prmVal').textContent = prm.toFixed(1) + '%';
+  document.getElementById('betaRVal').textContent = beta.toFixed(2);
+  const er = rf + beta * prm;
+  const pr = beta * prm;
+  document.getElementById('erVal').textContent = er.toFixed(1) + '%';
+  document.getElementById('prVal').textContent = pr.toFixed(1) + '%';
+  document.getElementById('rfStatVal').textContent = rf.toFixed(1) + '%';
+}
+updateRisque();
+
+// ============================================================
+// DIVERSIFICATION
+// ============================================================
+let diversChart = null;
+function updateDiverChart() {
+  const n = +document.getElementById('nTitres').value;
+  const sigAvg = +document.getElementById('sigmaAvg').value / 100;
+  const sigMkt = +document.getElementById('sigmaMarket').value / 100;
+  document.getElementById('nTitresVal').textContent = n;
+  document.getElementById('sigmaAvgVal').textContent = document.getElementById('sigmaAvg').value + '%';
+  document.getElementById('sigmaMarketVal').textContent = document.getElementById('sigmaMarket').value + '%';
+
+  // sigma_p(n) ~ sqrt(sigMkt^2 + (sigAvg^2 - sigMkt^2)/n)
+  const sigP = Math.sqrt(sigMkt*sigMkt + (sigAvg*sigAvg - sigMkt*sigMkt) / n);
+  document.getElementById('divRisqueVal').textContent = (sigP*100).toFixed(1) + '%';
+  document.getElementById('divReductionVal').textContent = (((sigAvg - sigP) / sigAvg)*100).toFixed(0) + '%';
+
+  const labels = Array.from({length: 60}, (_, i) => i+1);
+  const data = labels.map(ni => Math.sqrt(sigMkt*sigMkt + (sigAvg*sigAvg - sigMkt*sigMkt) / ni) * 100);
+  const mktLine = labels.map(() => sigMkt * 100);
+  const specific = data.map(d => d - sigMkt * 100);
+
+  destroyChart('diversification');
+  const ctx = document.getElementById('diversificationChart').getContext('2d');
+  charts['diversification'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Risque total σp', data, borderColor: '#4f9cf9', backgroundColor: 'rgba(79,156,249,0.08)', fill: '+1', tension: 0.4, pointRadius: labels.map((l,i) => l===n ? 6 : 0), pointBackgroundColor: '#4f9cf9', borderWidth: 2 },
+        { label: 'Risque de marché (plancher)', data: mktLine, borderColor: '#f95f5f', borderDash: [6,3], fill: false, pointRadius: 0, borderWidth: 2 }
+      ]
+    },
+    options: { ...baseOptions('Nombre de titres', 'Risque (%)'),
+      plugins: { ...baseOptions().plugins, annotation: undefined }
+    }
+  });
+}
+updateDiverChart();
+
+// ============================================================
+// PORTFOLIO 2 ASSETS
+// ============================================================
+let pfChart = null, pfRhoChart = null;
+function calcPF(er1, er2, sig1, sig2, rho, w) {
+  const erP = w * er1 + (1-w) * er2;
+  const vP = w*w*sig1*sig1 + (1-w)*(1-w)*sig2*sig2 + 2*rho*w*(1-w)*sig1*sig2;
+  const sigP = Math.sqrt(Math.max(0, vP));
+  return { erP, vP, sigP };
+}
+function wStar(sig1, sig2, rho) {
+  const num = sig2*sig2 - rho*sig1*sig2;
+  const den = sig1*sig1 + sig2*sig2 - 2*rho*sig1*sig2;
+  return Math.max(0, Math.min(1, num / den));
+}
+
+function updatePortfolio() {
+  const er1 = +document.getElementById('er1').value / 100;
+  const er2 = +document.getElementById('er2').value / 100;
+  const sig1 = +document.getElementById('sig1').value / 100;
+  const sig2 = +document.getElementById('sig2').value / 100;
+  const rho = +document.getElementById('rho').value;
+  const w = +document.getElementById('weight').value;
+
+  document.getElementById('er1Val').textContent = (er1*100).toFixed(1) + '%';
+  document.getElementById('er2Val').textContent = (er2*100).toFixed(1) + '%';
+  document.getElementById('sig1Val').textContent = (sig1*100).toFixed(0) + '%';
+  document.getElementById('sig2Val').textContent = (sig2*100).toFixed(0) + '%';
+  document.getElementById('rhoVal').textContent = rho.toFixed(2);
+  document.getElementById('weightVal').textContent = (w*100).toFixed(0) + '%';
+
+  const { erP, vP, sigP } = calcPF(er1, er2, sig1, sig2, rho, w);
+  const ws = wStar(sig1, sig2, rho);
+
+  document.getElementById('pfER').textContent = (erP*100).toFixed(1) + '%';
+  document.getElementById('pfSig').textContent = (sigP*100).toFixed(1) + '%';
+  document.getElementById('pfVar').textContent = (vP*100).toFixed(2) + '%';
+  document.getElementById('pfWStar').textContent = (ws*100).toFixed(1) + '%';
+
+  // Curve chart
+  const weights = Array.from({length: 101}, (_, i) => i/100);
+  const curve = weights.map(ww => calcPF(er1, er2, sig1, sig2, rho, ww));
+
+  destroyChart('pf');
+  const ctx = document.getElementById('pfChart').getContext('2d');
+  charts['pf'] = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Frontière PF', data: curve.map(c => ({x: c.sigP*100, y: c.erP*100})), showLine: true, fill: false, borderColor: '#4f9cf9', pointRadius: 0, borderWidth: 2, tension: 0.4 },
+        { label: 'w = ' + (w*100).toFixed(0) + '%', data: [{x: sigP*100, y: erP*100}], pointRadius: 8, backgroundColor: '#f97b4f', borderColor: '#fff', borderWidth: 2 },
+        { label: 'Actif 1', data: [{x: sig1*100, y: er1*100}], pointRadius: 8, backgroundColor: '#4f9cf9', borderColor: '#fff', borderWidth: 2 },
+        { label: 'Actif 2', data: [{x: sig2*100, y: er2*100}], pointRadius: 8, backgroundColor: '#63e6a0', borderColor: '#fff', borderWidth: 2 }
+      ]
+    },
+    options: { ...baseOptions('σ (%)', 'E(R) (%)') }
+  });
+
+  // Rho comparison chart
+  const rhos = [-0.9, -0.5, 0, 0.3, 0.9];
+  const rhoColors = ['#f95f5f', '#f97b4f', '#f9e44f', '#4f9cf9', '#63e6a0'];
+  destroyChart('pfRho');
+  const ctx2 = document.getElementById('pfRhoChart').getContext('2d');
+  charts['pfRho'] = new Chart(ctx2, {
+    type: 'scatter',
+    data: {
+      datasets: rhos.map((r, i) => ({
+        label: 'ρ = ' + r,
+        data: weights.map(ww => { const c = calcPF(er1, er2, sig1, sig2, r, ww); return {x: c.sigP*100, y: c.erP*100}; }),
+        showLine: true, fill: false, borderColor: rhoColors[i], pointRadius: 0, borderWidth: 1.5, tension: 0.3
+      }))
+    },
+    options: { ...baseOptions('σ (%)', 'E(R) (%)') }
+  });
+}
+updatePortfolio();
+
+// ============================================================
+// FRONTIERE EFFICIENTE
+// ============================================================
+function updateFrontiere() {
+  const rho = +document.getElementById('fronRho').value;
+  const rf = +document.getElementById('fronRf').value / 100;
+  document.getElementById('fronRhoVal').textContent = rho.toFixed(2);
+  document.getElementById('fronRfVal').textContent = (rf*100).toFixed(1) + '%';
+
+  // Generate 8 risky assets
+  const assets = [
+    { er: 0.06, sig: 0.15 }, { er: 0.08, sig: 0.20 }, { er: 0.10, sig: 0.25 },
+    { er: 0.12, sig: 0.30 }, { er: 0.09, sig: 0.18 }, { er: 0.07, sig: 0.22 },
+    { er: 0.14, sig: 0.38 }, { er: 0.11, sig: 0.28 },
+  ];
+
+  // Simplified frontier: parameterize by target return
+  // Use 2-fund separation with asset 1 (min var) and asset N (max return)
+  const minV = assets.reduce((a, b) => a.sig < b.sig ? a : b);
+  const maxE = assets.reduce((a, b) => a.er > b.er ? a : b);
+
+  const frontPoints = [];
+  for (let t = 0; t <= 1; t += 0.02) {
+    const er = minV.er + t * (maxE.er - minV.er);
+    const sig = Math.sqrt((1-t)*(1-t)*minV.sig*minV.sig + t*t*maxE.sig*maxE.sig + 2*rho*(1-t)*t*minV.sig*maxE.sig);
+    frontPoints.push({ x: sig * 100, y: er * 100 });
+  }
+
+  // Find min var point on frontier
+  const minPt = frontPoints.reduce((a, b) => a.x < b.x ? a : b);
+  const eff = frontPoints.filter(p => p.y >= minPt.y);
+  const ineff = frontPoints.filter(p => p.y < minPt.y);
+
+  // Tangent portfolio (max Sharpe)
+  const tangent = eff.reduce((best, p) => {
+    const sr = (p.y/100 - rf) / (p.x/100);
+    return sr > best.sr ? { ...p, sr } : best;
+  }, { sr: -Infinity, x: 0, y: 0 });
+
+  // CML
+  const cmlX = [0, tangent.x * 1.5];
+  const cmlY = [rf * 100, rf * 100 + (tangent.y - rf*100) / tangent.x * tangent.x * 1.5];
+
+  destroyChart('frontiere');
+  const ctx = document.getElementById('frontiereChart').getContext('2d');
+  charts['frontiere'] = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Portefeuilles inefficients', data: ineff, showLine: true, borderColor: 'rgba(79,156,249,0.35)', backgroundColor: 'rgba(79,156,249,0.1)', pointRadius: 0, borderWidth: 2, fill: false, tension: 0.3 },
+        { label: 'Frontière efficiente', data: eff, showLine: true, borderColor: '#63e6a0', backgroundColor: 'rgba(99,230,160,0.05)', pointRadius: 0, borderWidth: 3, fill: false, tension: 0.3 },
+        { label: 'Actifs individuels', data: assets.map(a => ({x: a.sig*100, y: a.er*100})), pointRadius: 7, backgroundColor: '#f9e44f', borderColor: '#fff', borderWidth: 1.5, showLine: false },
+        { label: '⭐ Variance min', data: [minPt], pointRadius: 10, backgroundColor: '#4f9cf9', borderColor: '#fff', borderWidth: 2, pointStyle: 'star' },
+        { label: '🔺 Portefeuille tangent', data: [{x: tangent.x, y: tangent.y}], pointRadius: 10, backgroundColor: '#f97b4f', borderColor: '#fff', borderWidth: 2, pointStyle: 'triangle' },
+        { label: 'CML', data: cmlX.map((x, i) => ({x, y: cmlY[i]})), showLine: true, borderColor: '#f9e44f', borderDash: [5,3], pointRadius: 0, fill: false, borderWidth: 1.5 },
+      ]
+    },
+    options: { ...baseOptions('σ (%)', 'E(R) (%)') }
+  });
+}
+updateFrontiere();
+
+// ============================================================
+// BETA CHART
+// ============================================================
+function updateBetaChart() {
+  const betaTrue = +document.getElementById('betaTrue').value;
+  const sigmaM = +document.getElementById('sigmaM').value / 100;
+  const noise = +document.getElementById('noiseB').value / 100;
+  document.getElementById('betaTrueVal').textContent = betaTrue.toFixed(2);
+  document.getElementById('sigmaMVal').textContent = (sigmaM*100).toFixed(0) + '%';
+  document.getElementById('noiseBVal').textContent = (noise*100).toFixed(0) + '%';
+
+  // Simulate data
+  const N = 60;
+  const seed = 42;
+  function rand(i) { return ((Math.sin(i * 127.1 + 311.7) * 43758.5453) % 1 + 1) % 1; }
+  function randn(i) { const u1 = rand(i*2), u2 = rand(i*2+1); return Math.sqrt(-2*Math.log(u1+1e-10))*Math.cos(2*Math.PI*u2); }
+
+  const Rm = Array.from({length:N}, (_, i) => randn(i) * sigmaM);
+  const Ri = Rm.map((rm, i) => betaTrue * rm + randn(i+N) * noise);
+
+  // OLS
+  const meanRm = Rm.reduce((a,b)=>a+b,0)/N;
+  const meanRi = Ri.reduce((a,b)=>a+b,0)/N;
+  const cov = Rm.reduce((s,rm,i) => s + (rm-meanRm)*(Ri[i]-meanRi), 0) / (N-1);
+  const varRm = Rm.reduce((s,rm) => s + (rm-meanRm)**2, 0) / (N-1);
+  const betaEst = cov / varRm;
+  const alpha = meanRi - betaEst * meanRm;
+  const Rhat = Rm.map(rm => alpha + betaEst*rm);
+  const SS_res = Ri.reduce((s,ri,i) => s + (ri-Rhat[i])**2, 0);
+  const SS_tot = Ri.reduce((s,ri) => s + (ri-meanRi)**2, 0);
+  const R2 = 1 - SS_res/SS_tot;
+
+  document.getElementById('betaEstVal').textContent = betaEst.toFixed(3);
+  document.getElementById('r2Val').textContent = (R2*100).toFixed(1) + '%';
+  document.getElementById('alphaVal').textContent = (alpha*100).toFixed(2) + '%';
+
+  const minRm = Math.min(...Rm), maxRm = Math.max(...Rm);
+  const regLine = [
+    {x: minRm*100, y: (alpha + betaEst*minRm)*100},
+    {x: maxRm*100, y: (alpha + betaEst*maxRm)*100}
+  ];
+
+  destroyChart('beta');
+  const ctx = document.getElementById('betaChart').getContext('2d');
+  charts['beta'] = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Observations (Rm, Ri)', data: Rm.map((rm,i)=>({x:rm*100,y:Ri[i]*100})), pointRadius: 4, backgroundColor: 'rgba(79,156,249,0.5)', borderColor: '#4f9cf9', borderWidth: 1 },
+        { label: `Droite: β=${betaEst.toFixed(3)}, R²=${(R2*100).toFixed(1)}%`, data: regLine, showLine: true, fill: false, borderColor: '#f97b4f', pointRadius: 0, borderWidth: 2.5 }
+      ]
+    },
+    options: { ...baseOptions('R_m (%)', 'R_i (%)') }
+  });
+}
+updateBetaChart();
+
+// ============================================================
+// MEDAF
+// ============================================================
+function updateMEDAF() {
+  const rf = +document.getElementById('medafRf').value / 100;
+  const em = +document.getElementById('medafEm').value / 100;
+  const beta = +document.getElementById('medafBeta').value;
+  const robs = +document.getElementById('medafRobs').value / 100;
+
+  document.getElementById('medafRfVal').textContent = (rf*100).toFixed(1) + '%';
+  document.getElementById('medafEmVal').textContent = (em*100).toFixed(1) + '%';
+  document.getElementById('medafBetaVal').textContent = beta.toFixed(2);
+  document.getElementById('medafRobsVal').textContent = (robs*100).toFixed(1) + '%';
+
+  const er = rf + beta * (em - rf);
+  const alphaJ = robs - er;
+  document.getElementById('medafER').textContent = (er*100).toFixed(1) + '%';
+  document.getElementById('medafAlpha').textContent = (alphaJ*100 >= 0 ? '+' : '') + (alphaJ*100).toFixed(1) + '%';
+  const evalBox = document.getElementById('medafEvalBox');
+  const evalEl = document.getElementById('medafEval');
+  if (Math.abs(alphaJ) < 0.003) { evalEl.textContent = '⚖️ Équilibré'; evalBox.style.borderColor = 'var(--border)'; }
+  else if (alphaJ > 0) { evalEl.textContent = '📈 Sous-évalué'; evalBox.style.borderColor = 'var(--accent3)'; evalEl.style.color = 'var(--accent3)'; }
+  else { evalEl.textContent = '📉 Sur-évalué'; evalBox.style.borderColor = 'var(--danger)'; evalEl.style.color = 'var(--danger)'; }
+
+  // SML chart
+  const betas = [0, 0.5, 1, 1.5, 2, 2.5];
+  const sml = betas.map(b => ({ x: b, y: (rf + b*(em-rf))*100 }));
+
+  destroyChart('medaf');
+  const ctx = document.getElementById('medafChart').getContext('2d');
+  charts['medaf'] = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'SML (Droite de marché)', data: sml, showLine: true, fill: false, borderColor: '#4f9cf9', pointRadius: 0, borderWidth: 2.5 },
+        { label: 'Marché (β=1)', data: [{x:1, y:em*100}], pointRadius: 8, backgroundColor: '#f9e44f', borderColor: '#fff', borderWidth: 2 },
+        { label: `Titre (β=${beta}, obs=${(robs*100).toFixed(1)}%)`, data: [{x: beta, y: robs*100}], pointRadius: 10, backgroundColor: alphaJ >= 0 ? '#63e6a0' : '#f95f5f', borderColor: '#fff', borderWidth: 2 },
+      ]
+    },
+    options: { ...baseOptions('β', 'E(R) (%)'),
+      scales: { x: { min: 0, max: 2.5, title:{display:true,text:'β',color:'#8892a4'}, grid:{color:'rgba(37,42,56,0.8)'}, ticks:{color:'#8892a4'} }, y: { title:{display:true,text:'E(R) (%)',color:'#8892a4'}, grid:{color:'rgba(37,42,56,0.8)'}, ticks:{color:'#8892a4'} } }
+    }
+  });
+
+  // Table
+  const rows = [
+    {name:'Défensif pur', b:0.3}, {name:'Défensif', b:0.6}, {name:'Marché', b:1.0},
+    {name:'Agressif', b:1.4}, {name:'Très agressif', b:2.0}
+  ];
+  const tbody = document.getElementById('medafTbody');
+  tbody.innerHTML = rows.map(r => {
+    const er2 = rf + r.b * (em - rf);
+    const pr = r.b * (em - rf);
+    return `<tr><td>${r.name}</td><td style="font-family:'IBM Plex Mono'">${r.b.toFixed(1)}</td><td style="color:var(--accent);font-family:'IBM Plex Mono'">${(er2*100).toFixed(1)}%</td><td style="font-family:'IBM Plex Mono'">${(pr*100).toFixed(1)}%</td></tr>`;
+  }).join('');
+}
+updateMEDAF();
+
+// ============================================================
+// EX 1
+// ============================================================
+function updateEx1() {
+  const w = +document.getElementById('ex1w').value;
+  document.getElementById('ex1wVal').textContent = (w*100).toFixed(0) + '%';
+  const sig1 = 0.4525, sig2 = 0.4872, rho = 0.369;
+  const vp = w*w*sig1*sig1 + (1-w)*(1-w)*sig2*sig2 + 2*rho*w*(1-w)*sig1*sig2;
+  const sigP = Math.sqrt(vp);
+  const ws = (sig2*sig2 - rho*sig1*sig2) / (sig1*sig1 + sig2*sig2 - 2*rho*sig1*sig2);
+  document.getElementById('ex1Vp').textContent = vp.toFixed(4);
+  document.getElementById('ex1Sig').textContent = (sigP*100).toFixed(2) + '%';
+  document.getElementById('ex1Wstar').textContent = (ws*100).toFixed(2) + '%';
+}
+updateEx1();
+
+// ============================================================
+// EX 4
+// ============================================================
+function updateEx4() {
+  const rf = +document.getElementById('ex4Rf').value / 100;
+  const em = +document.getElementById('ex4Em').value / 100;
+  document.getElementById('ex4RfV').textContent = (rf*100).toFixed(1) + '%';
+  document.getElementById('ex4EmV').textContent = (em*100).toFixed(1) + '%';
+
+  const betas = [0.59, 1.35, 0.45, 1.20, 0.65];
+  const robs = [0.065, 0.12, 0.032, 0.15, 0.04];
+  const evalFn = (alpha) => alpha > 0.003 ? '✅ Sous-évalué' : alpha < -0.003 ? '⚠️ Sur-évalué' : '⚖️ Équilibré';
+  const colorFn = (alpha) => alpha > 0.003 ? 'var(--accent3)' : alpha < -0.003 ? 'var(--danger)' : 'var(--text2)';
+
+  for (let i = 1; i <= 5; i++) {
+    const er = rf + betas[i-1] * (em - rf);
+    const alpha = robs[i-1] - er;
+    document.getElementById(`ex4r${i}`).textContent = (er*100).toFixed(1) + '%';
+    document.getElementById(`ex4a${i}`).innerHTML = `<span style="color:${colorFn(alpha)}">${alpha>=0?'+':''}${(alpha*100).toFixed(1)}%</span>`;
+    document.getElementById(`ex4e${i}`).innerHTML = `<span style="color:${colorFn(alpha)}">${evalFn(alpha)}</span>`;
+  }
+}
+updateEx4();
+
+// ============================================================
+// QUIZ
+// ============================================================
+const quizData = [
+  { q: "Quel est l'effet de la diversification sur le risque d'un portefeuille ?", opts: ["Elle élimine tout risque", "Elle réduit le risque spécifique mais pas le risque de marché", "Elle réduit uniquement le risque de marché", "Elle n'a aucun effet sur le risque"], ans: 1, exp: "La diversification permet d'éliminer le risque spécifique (idiosyncratique) des titres. En revanche, le risque de marché (systématique), mesuré par le bêta, est non diversifiable." },
+  { q: "Un titre avec β = 1.8 est qualifié de :", opts: ["Défensif", "Neutre par rapport au marché", "Agressif — amplifie les mouvements du marché", "Contra-cyclique"], ans: 2, exp: "β > 1 signifie que le titre est agressif : il amplifie les hausses et les baisses du marché. Ici, une hausse de 1% du marché correspond à +1.8% pour ce titre en moyenne." },
+  { q: "Selon le MEDAF, quel est le seul risque rémunéré par le marché ?", opts: ["Le risque total", "Le risque spécifique", "Le risque systématique (non diversifiable)", "Le risque de liquidité"], ans: 2, exp: "Le MEDAF postule que seul le risque systématique (β) est rémunéré, car le risque spécifique peut être éliminé gratuitement par diversification." },
+  { q: "La frontière efficiente de Markowitz représente :", opts: ["Les portefeuilles avec la rentabilité maximale", "Les portefeuilles avec le risque minimal", "Les portefeuilles offrant le meilleur compromis rendement-risque", "Les titres sans risque uniquement"], ans: 2, exp: "La frontière efficiente regroupe tous les portefeuilles qui maximisent l'espérance de rentabilité pour un niveau de risque donné, ou minimisent le risque pour un niveau de rentabilité donné." },
+  { q: "Si la corrélation entre deux actifs vaut -1, que se passe-t-il ?", opts: ["Il est impossible de réduire le risque", "On peut construire un portefeuille de risque nul", "Les deux actifs ont la même rentabilité", "Le bêta est forcément négatif"], ans: 1, exp: "Avec ρ = -1 (corrélation parfaitement négative), il est possible de trouver des poids tels que la variance du portefeuille soit nulle. C'est le cas théorique de diversification parfaite." },
+  { q: "La formule w* = (σ₂² − ρσ₁σ₂)/(σ₁² + σ₂² − 2ρσ₁σ₂) donne :", opts: ["L'espérance de rentabilité optimale", "Le poids optimal minimisant la variance du portefeuille", "Le bêta du portefeuille", "La prime de risque"], ans: 1, exp: "Cette formule est obtenue en dérivant la variance du portefeuille à deux actifs par rapport à w et en annulant la dérivée. Elle donne le poids w* qui minimise la variance." },
+  { q: "Un titre se situe au-dessus de la droite de marché (SML). Cela signifie :", opts: ["Il est sur-évalué (alpha négatif)", "Il est correctement évalué", "Il est sous-évalué (alpha positif)", "Son bêta est supérieur à 1"], ans: 2, exp: "Un titre au-dessus de la SML offre une rentabilité observée supérieure à celle exigée par le MEDAF : son alpha de Jensen est positif. Le titre est sous-évalué — le marché va corriger à la hausse." },
+  { q: "Quelle hypothèse centrale de la théorie de Markowitz est critiquée ?", opts: ["L'aversion au risque des investisseurs", "La normalité des distributions de rentabilité", "L'existence de l'actif sans risque", "La diversification"], ans: 1, exp: "La distribution normale (gaussienne) sous-estime la probabilité des événements extrêmes (krachs, crises). La réalité financière présente des queues épaisses (leptokurtose)." },
+  { q: "Le coefficient de détermination R² d'une régression bêta indique :", opts: ["La valeur du bêta", "La proportion du risque total expliquée par le risque de marché", "La prime de risque", "Le taux sans risque"], ans: 1, exp: "R² mesure la proportion de la variance du titre expliquée par la variance du marché (risque systématique). 1−R² représente la part du risque spécifique." },
+  { q: "Pour une diversification efficace (≈ élimination du risque spécifique), combien de titres faut-il ?", opts: ["5 titres", "10 titres", "30 titres ou plus", "100 titres minimum"], ans: 2, exp: "Les travaux empiriques montrent qu'un portefeuille d'environ 30 titres décorrélés permet d'éliminer la quasi-totalité du risque spécifique. Au-delà, l'apport marginal de la diversification est très faible." }
+];
+
+let quizScoreVal = 0;
+let quizAnswered = new Array(quizData.length).fill(false);
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = quizData.map((q, qi) => `
+    <div class="card" id="quiz-card-${qi}">
+      <div class="quiz-q">${qi+1}. ${q.q}</div>
+      ${q.opts.map((opt, oi) => `
+        <div class="quiz-opt" id="qopt-${qi}-${oi}" onclick="answerQuiz(${qi},${oi})">${opt}</div>
+      `).join('')}
+      <div class="quiz-feedback" id="qfb-${qi}"></div>
+    </div>
+  `).join('');
+  document.getElementById('quizTotal').textContent = quizData.length;
+}
+
+function answerQuiz(qi, oi) {
+  if (quizAnswered[qi]) return;
+  quizAnswered[qi] = true;
+  const q = quizData[qi];
+  const fb = document.getElementById(`qfb-${qi}`);
+  document.querySelectorAll(`[id^="qopt-${qi}-"]`).forEach(el => el.style.pointerEvents = 'none');
+  const optEl = document.getElementById(`qopt-${qi}-${oi}`);
+  const corrEl = document.getElementById(`qopt-${qi}-${q.ans}`);
+  if (oi === q.ans) {
+    optEl.classList.add('correct');
+    quizScoreVal++;
+    fb.className = 'quiz-feedback show ok';
+    fb.textContent = '✅ Correct ! ' + q.exp;
+  } else {
+    optEl.classList.add('wrong');
+    corrEl.classList.add('correct');
+    fb.className = 'quiz-feedback show ko';
+    fb.textContent = '❌ Incorrect. ' + q.exp;
+  }
+  document.getElementById('quizScore').textContent = quizScoreVal;
+}
+
+function resetQuiz() {
+  quizScoreVal = 0;
+  quizAnswered = new Array(quizData.length).fill(false);
+  document.getElementById('quizScore').textContent = 0;
+  renderQuiz();
+}
+
+renderQuiz();
+</script>
+</body>
+</html>

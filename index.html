@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Applications interactives - Gestion financiere L2 AES</title>
+  <style>
+    :root {
+      --bg: #f5f1ea;
+      --panel: #fffdf8;
+      --ink: #1b2733;
+      --muted: #66727d;
+      --line: #d8d1c5;
+      --accent: #0c6b73;
+      --accent-soft: #dff1f3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, #ebe4d8 0, transparent 28%),
+        linear-gradient(180deg, #f7f3ed 0%, #f1ebe2 100%);
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 20px 64px;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    .kicker {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 999px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.05;
+    }
+
+    p.lead {
+      max-width: 720px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-top: 34px;
+    }
+
+    .card {
+      padding: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(27, 39, 51, 0.06);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .card a {
+      display: inline-block;
+      padding: 10px 14px;
+      color: white;
+      text-decoration: none;
+      background: var(--accent);
+      border-radius: 10px;
+    }
+
+    footer {
+      margin-top: 32px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="kicker">Gestion financiere - L2 AES</span>
+      <h1>Applications interactives</h1>
+      <p class="lead">
+        Ces applications sont proposees en libre acces pour s'entrainer sur quelques points du cours.
+        Elles completent les slides, les exemples vus en seance et les feuilles d'exercices.
+      </p>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Rappels statistiques</h2>
+        <p>Prérequis utiles avant la théorie financière : moyenne, dispersion, corrélation et premiers repères.</p>
+        <a href="gestfin_rappel-stats_prerequis_v2.html">Ouvrir l'application</a>
+      </article>
+
+      <article class="card">
+        <h2>Théorie financière</h2>
+        <p>Rentabilité, risque, diversification, portefeuille, bêta et logique du MEDAF.</p>
+        <a href="gestfin_theorie-financiere_v2.html">Ouvrir l'application</a>
+      </article>
+
+      <article class="card">
+        <h2>Financement</h2>
+        <p>Structure financière, coût du capital, dette, capitaux propres et arbitrages de financement.</p>
+        <a href="gestfin_financement_v2.html">Ouvrir l'application</a>
+      </article>
+
+      <article class="card">
+        <h2>Investissement</h2>
+        <p>Flux nets de trésorerie, VAN, TRI et principaux critères de choix d'investissement.</p>
+        <a href="gestfin_investissement_v2.html">Ouvrir l'application</a>
+      </article>
+    </section>
+
+    <footer>
+      Ressources complémentaires destinées aux étudiants du cours de Gestion financière - L2 AES.
+    </footer>
+  </main>
+</body>
+</html>
