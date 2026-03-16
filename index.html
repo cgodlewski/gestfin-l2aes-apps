@@ -13,6 +13,9 @@
       --line: #d8d1c5;
       --accent: #0c6b73;
       --accent-soft: #dff1f3;
+      --warn-bg: #fff4dd;
+      --warn-line: #e7c36d;
+      --warn-ink: #7a5a12;
     }
 
     * { box-sizing: border-box; }
@@ -27,7 +30,7 @@
     }
 
     main {
-      max-width: 900px;
+      max-width: 980px;
       margin: 0 auto;
       padding: 48px 20px 64px;
     }
@@ -55,11 +58,27 @@
     }
 
     p.lead {
-      max-width: 720px;
+      max-width: 760px;
       margin: 0;
       color: var(--muted);
       font-size: 18px;
       line-height: 1.6;
+    }
+
+    .disclaimer {
+      margin-top: 24px;
+      padding: 16px 18px;
+      background: var(--warn-bg);
+      border: 1px solid rgba(231, 195, 109, 0.65);
+      border-left: 5px solid var(--warn-line);
+      border-radius: 14px;
+      color: var(--warn-ink);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .disclaimer strong {
+      color: #6b4d10;
     }
 
     .grid {
@@ -102,6 +121,7 @@
       margin-top: 32px;
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -111,32 +131,36 @@
       <span class="kicker">Gestion financiere - L2 AES</span>
       <h1>Applications interactives</h1>
       <p class="lead">
-        Ces applications sont proposees en libre acces pour s'entrainer sur quelques points du cours.
-        Elles completent les slides, les exemples vus en seance et les feuilles d'exercices.
+        Ces applications completent les slides, les exemples vus en seance et les feuilles d'exercices.
+        Elles sont pensees comme des supports d'entrainement et de visualisation pour les differents chapitres du cours.
       </p>
+      <div class="disclaimer">
+        <strong>Avertissement.</strong> Applications a visee pedagogique. Les donnees, exemples, visualisations et calculs presentes sont des illustrations ou des instantanes indicatifs, susceptibles de ne pas etre a jour. Ils ne constituent ni un conseil financier, ni une recommandation d'investissement, ni une information de marche en temps reel.
+      </div>
     </header>
 
+    <section class="grid" aria-label="Applications du cours">
       <article class="card">
-        <h2>Théorie financière</h2>
-        <p>Rentabilité, risque, diversification, portefeuille, bêta et logique du MEDAF.</p>
+        <h2>Theorie financiere</h2>
+        <p>Rentabilite, risque, diversification, portefeuille, beta et logique du MEDAF.</p>
         <a href="gestfin_theorie-financiere_v2.html">Ouvrir l'application</a>
       </article>
 
       <article class="card">
         <h2>Financement</h2>
-        <p>Structure financière, coût du capital, dette, capitaux propres et arbitrages de financement.</p>
+        <p>Structure financiere, cout du capital, dette, capitaux propres et arbitrages de financement.</p>
         <a href="gestfin_financement_v2.html">Ouvrir l'application</a>
       </article>
 
       <article class="card">
         <h2>Investissement</h2>
-        <p>Flux nets de trésorerie, VAN, TRI et principaux critères de choix d'investissement.</p>
+        <p>Flux nets de tresorerie, VAN, TRI et principaux criteres de choix d'investissement.</p>
         <a href="gestfin_investissement_v2.html">Ouvrir l'application</a>
       </article>
     </section>
 
     <footer>
-      Ressources complémentaires destinées aux étudiants du cours de Gestion financière - L2 AES. Prof. C.J. Godlewski.
+      Ressources complementaires destinees aux etudiants du cours de Gestion financiere - L2 AES. Prof. C.J. Godlewski.
     </footer>
   </main>
 </body>
